@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+    
+    <mapper namespace="ferp.dao.C1_Dao">
+    	
+    	<select id="r7200SelectAccount" resultType="account" parameterType="account">
+    		SELECT * FROM Account
+    	</select>
+    	
+    	<insert id="r7201insertAccount" parameterType="account" >
+    	INSERT INTO ACCOUNT values(#{acntNum},#{acntGroup},#{acntTitle},#{acntUsing})
+    	</insert>
+
+    </mapper>

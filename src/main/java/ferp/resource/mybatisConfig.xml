@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<typeAliases>
+		<typeAlias alias="stock" type="vo.Stock"/>
+		<typeAlias alias="account" type="vo.Account"/>
+		<typeAlias alias="product" type="vo.Product"/>
+		<typeAlias alias="store" type="vo.Store"/>
+		<typeAlias alias="acstmt" type="vo.ACStatement"/>
+		<typeAlias alias="storeclerk" type="vo.StoreClerk"/>
+		<typeAlias alias="storeclerksch" type="vo.SCPage"/>
+		<typeAlias alias="orders" type="vo.Orders"/>
+		<typeAlias alias="rqproduct" type="vo.Rq_Product"/> 
+		 
+		<typeAlias alias="prodOrder" type="vo.ProdOrder"/>
+		<typeAlias alias="poses" type="vo.Prod_order_stock_emp_store"/>
+
+		<typeAlias alias="clerkschedule" type="vo.ClerkSchedule"/>
+		<typeAlias alias="emp" type="vo.Emp"/>
+		<typeAlias alias="menu" type="vo.Menu"/>
+		<typeAlias alias="productProdOrder" type="vo.ProductProdOrder"/>
+		<typeAlias alias="menuSch" type="vo.MenuSch"/>
+		<typeAlias alias="notice" type="vo.Notice"/>
+		<typeAlias alias="noticeSch" type="vo.NoticeSch"/>
+		<typeAlias alias="scheduleCalender" type="vo.ScheduleCalender"/>
+		<typeAlias alias="onsale" type="vo.Onsale"/>
+		<typeAlias alias="openTimeCalender" type="vo.OpenTimeCalender"/>
+		<typeAlias alias="prodProdOrder" type="vo.Prod_ProdOrder"/>
+		<typeAlias alias="clerkfile" type="vo.ClerkFile"/>
+		<typeAlias alias="pos" type="vo.Prod_order_stock"/>
+		<typeAlias alias="qa" type="vo.QA"/>
+		<typeAlias alias="qachecklist" type="vo.QAchecklist"/>
+		<typeAlias alias="defectorder" type="vo.DefectOrder"/>
+		<typeAlias alias="sales" type="vo.Sales"/>
+		<typeAlias alias="ontime" type="vo.OnTime"/>
+		<typeAlias alias="productStock" type="vo.ProductStock"/>
+	</typeAliases>
+			
+<mappers>
+		<mapper resource="ferp/resource/mappers/A1_Mapper.xml"/>
+		<mapper resource="ferp/resource/mappers/A2_Mapper.xml"/>
+		<mapper resource="ferp/resource/mappers/B1_Mapper.xml"/>
+		<mapper resource="ferp/resource/mappers/C1_Mapper.xml"/>
+		<mapper resource="ferp/resource/mappers/C2_Mapper.xml"/>
+		<mapper resource="ferp/resource/mappers/B2_Mapper.xml"/>
+</mappers>
+
+	
+</configuration>

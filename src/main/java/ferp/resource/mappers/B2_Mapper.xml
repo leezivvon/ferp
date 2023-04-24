@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >  
+
+<mapper namespace="ferp.dao.B2_Dao">
+	<!-- 메뉴 조회 -->
+	<select id="searchMenu" resultType="menu" parameterType="menuSch">
+		select *
+		from (
+			SELECT rownum cnt, n.*
+			FROM (
+				SELECT *
+				FROM menu
+				WHERE menuname LIKE '%'||#{menuName}||'%'
+				order BY category)n )
+		where cnt between #{start} and #{end}	
+	</select>
+	<select id="totCntMenu" resultType="int" parameterType="menuSch">
+		select count(*)
+		from menu
+		where 1=1
+		and menuname like '%'||#{menuName}||'%'
+	</select>
+	<insert id="insertMenu" parameterType="menu">
+		INSERT INTO menu VALUES('M'||menu_seq.nextval, #{menuName}, #{price}, #{info}, #{img}, #{necessary}, #{category})
+	</insert>
+	<!-- 메뉴 등록 시 필수 메뉴라면 모든 매장에 자동으로 등록하기 위한 모든 매장번호 가져오기 -->
+	<select id="getfrRegiNum" resultType="string">
+		SELECT FrRegiNum
+		FROM store
+		WHERE NOT empnum = '0'
+		AND NOT FrRegiNum = '9999999999'
+	</select>
+	<!-- 필수 메뉴 등록시 매장 필수 메뉴 등록 -->
+	<insert id="insertNesMenu" parameterType="onsale">
+		INSERT INTO onsale VALUES('M'||menu_seq.currval, #{frRegiNum})
+	</insert>
+	
+	<!-- 매장정보 등록 -->
+	<insert id="insertStore" parameterType="store">
+		INSERT INTO store VALUES(#{frRegiNum}, #{empNum}, #{frName}, sysdate, 
+			#{frOperTime}, #{frClosedDte}, #{frRepName}, #{frTel}, #{frAddress}, #{frPass}, #{email})
+	</insert>
+	<!-- 필수 메뉴 출력 -->
+	<select id="getnecessaryMenuNum" resultType="string">
+		SELECT menuNum
+		FROM menu
+		WHERE necessary = 'N'
+	</select>
+	<!-- 매장 등록시 매장 필수 메뉴 등록 -->
+	<insert id="necessaryMenu" parameterType="onsale">
+		INSERT INTO onsale VALUES(#{menuNum}, #{frRegiNum})
+	</insert>
+	
+	<!-- 매장정보 수정 -->
+	<update id="updateStore" parameterType="store">
+		UPDATE store
+		SET frName = #{frName},
+			frOperTime = #{frOperTime},
+			frClosedDte = #{frClosedDte},
+			frRepName = #{frRepName},
+			frTel = #{frTel},
+			frAddress = #{frAddress},
+			frPass = #{frPass},
+			empNum = #{empNum},
+			email = #{email}
+		WHERE frRegiNum = #{frRegiNum}
+	</update>
+	<!-- 수정시 매장정보 상세조회 -->
+	<select id="detailStore" resultType="store" parameterType="string">
+		SELECT *
+		FROM store
+		WHERE FrRegiNum = #{frRegiNum}
+	</select>
+	<!-- 매장 비활성화 -->
+	<update id="deleteStore" parameterType="string">
+		UPDATE store
+		SET empNum = '0',
+			frOpen = '',
+			frOperTime = '',
+			frClosedDte = '',
+			frTel = '',
+			frPass = null,
+			email = ''
+		WHERE frRegiNum = #{frRegiNum}
+	</update>
+	
+	
+	<!-- 직원 등록 -->
+	<insert id="insertEmp" parameterType="emp">
+		INSERT INTO emp VALUES(to_char(sysdate,'yymm')||emp_seq.nextval, #{pass}, #{ename}, #{dname})
+	</insert>
+	
+	<!-- 등록한 직원 정보 출력 -->
+	<select id="getEmpInfo" resultType="emp" parameterType="emp">
+		SELECT *
+		FROM emp
+		WHERE ename = #{ename}
+		and pass = #{pass}
+	</select>
+	<!-- 직원 비밀번호 변경 -->
+	<update id="updateEmpPass" parameterType="emp">
+		UPDATE EMP
+			SET pass = #{pass}
+		WHERE empNum = #{empnum}
+	</update>
+	
+
+	<!-- 중요 공지사항 -->
+	<select id="importantNotice" resultType="notice">
+	<![CDATA[
+		SELECT *
+		FROM (
+			SELECT *
+			FROM notice 
+			WHERE noticeNum LIKE '%'||'N'||'%'
+			AND important = 'o'
+			AND to_char(regdte, 'yyyymmdd') >= to_char(sysdate-1, 'yyyymmdd')
+			ORDER BY regdte DESC
+		)WHERE rownum = 1
+	]]>
+	</select>
+	<!-- 공지사항 조회 -->
+	<select id="searchNotice" resultType="notice" parameterType="noticeSch">
+		select *
+		from (
+			SELECT rownum cnt, n.*
+			FROM (
+				SELECT* FROM notice n
+				WHERE 1=1
+				AND title LIKE '%'||#{title}||'%'
+				and noticeNum LIKE '%'||'N'||'%'
+				ORDER BY regdte DESC)n )
+		where cnt between #{start} and #{end}	
+	</select>
+	<select id="totCntNotice" resultType="int" parameterType="noticeSch">
+		select count(*)
+		from notice
+		where 1=1
+		and title like '%'||#{title}||'%'
+		and noticeNum LIKE '%'||'N'||'%'
+	</select>
+	<!-- 공지사항 상세조회 -->
+	<select id="detailNotice" resultType="notice" parameterType="string">
+		SELECT *
+		FROM notice
+		WHERE noticeNum = #{noticeNum}
+	</select>
+	<!-- 조회수 증가-->
+	<update id="plusCnt" parameterType="string">
+		UPDATE notice
+			SET readcnt = readcnt+1
+		WHERE noticeNum = #{noticeNum}
+	</update>
+	<!-- 공지사항 등록 -->
+	<insert id="insertNotice" parameterType="notice">
+		INSERT INTO notice VALUES('N'||notice_seq.nextval, #{title}, #{content}, 
+					#{writer}, 0, sysdate, sysdate, #{fname}, #{important}, NULL, NULL, NULL)
+	</insert>
+	<!-- 공지사항 수정 -->
+	<update id="updateNotice" parameterType="notice">
+		UPDATE notice
+		SET title = #{title},
+			content = #{content},
+			fname = #{fname},
+			important = #{important}
+		WHERE noticeNum = #{noticeNum}
+	</update>
+	<!-- 공지사항 삭제 -->
+	<delete id="deleteNotice">
+		DELETE from notice
+		WHERE noticeNum = #{noticeNum}
+	</delete>
+	
+	
+	<!-- 사원 combo -->
+	<select id="getHOemp" resultType="emp">
+		SELECT *
+		FROM emp
+	</select>
+	<!-- 문의글 카테고리 combo -->
+	<select id="getNoticeCategory" resultType="string">
+		SELECT *
+		FROM noticeCategory
+		ORDER BY name DESC
+	</select>
+	<!-- 메뉴 카테고리 combo -->
+	<select id="getMenuCategory" resultType="string">
+		SELECT *
+		FROM menuCategory
+	</select>
+	<!-- 부서 combo -->
+	<select id="getDname" resultType="string">
+		SELECT *
+		FROM dnameCategory
+	</select>
+	<!-- 가맹점 번호 콤보 -->
+	<select id="getStoreNum" resultType="string">
+		SELECT FRREGINUM
+		FROM store
+	</select>
+	
+	<!-- 문의글 조회 -->
+	<select id="searchQnA" resultType="notice" parameterType="noticeSch">
+		select *
+		from (
+			select rownum cnt, LEVEL, n.*
+			from notice n
+			where 1=1
+			and title like '%'||#{title}||'%'
+			and noticeNum LIKE '%'||'Q'||'%'
+			START WITH replynum = '0'
+			CONNECT BY PRIOR noticeNum = replyNum
+			ORDER siblings BY regdte DESC )
+		where cnt between #{start} and #{end}	
+	</select>
+	<select id="totCntQnA" resultType="int" parameterType="noticeSch">
+		select count(*)
+		from notice
+		where 1=1
+		and title like '%'||#{title}||'%'
+		and noticeNum LIKE '%'||'Q'||'%'
+	</select>
+	<!-- 문의글 상세 조회 -->
+	<select id="detailQnA" resultType="notice" parameterType="string">
+		SELECT *
+		FROM notice
+		WHERE noticeNum = #{noticeNum}
+	</select>
+	<!-- 문의글 등록 -->
+	<insert id="insertQnA" parameterType="notice">
+		INSERT INTO notice VALUES('Q'||notice_seq.nextval, #{title}, #{content}, 
+					#{writer}, 0, sysdate, sysdate, #{fname}, NULL, #{replyNum}, #{category}, NULL)
+	</insert>
+	<!-- 문의글 수정 -->
+	<update id="updateQnA" parameterType="notice">
+		UPDATE notice
+		SET title = #{title},
+			content = #{content},
+			uptdte = sysdate,
+			fname = #{fname},
+			category = #{category}
+		WHERE noticeNum = #{noticeNum}
+	</update>
+	<!-- 문의글 삭제 -->
+	<delete id="deleteQnA" parameterType="string">
+		DELETE FROM notice 
+		WHERE noticeNum in (
+		            SELECT noticeNum 
+		            FROM notice
+		            START WITH noticeNum = #{noticeNum} 
+		            CONNECT BY PRIOR  noticeNum = replyNum
+		           )
+	</delete>
+	
+	
+	<!-- 최근 6개 공지사항만 출력 -->
+	<select id="getNotice" resultType="notice">
+	<![CDATA[
+		SELECT *
+		FROM (
+			SELECT rownum cnt, n.*
+			FROM (
+				SELECT* FROM notice n
+				WHERE 1=1
+				and noticeNum LIKE '%'||'N'||'%'
+				ORDER BY regdte DESC)n 
+		)
+		WHERE rownum <= 6
+	]]>
+	</select>
+	
+	<!-- 전체 매장 매출 조회 -->
+	<select id="getSales" resultType="sales">
+	<![CDATA[
+		SELECT nvl(a.tsum,0) tot, b.od orderdate
+		FROM (
+			SELECT to_char(orderdate, 'YYYY/MM/DD') ord, nvl(sum(PAYPRICE),0) tsum
+			FROM ORDERS
+			WHERE state = '완료'
+			GROUP BY to_char(orderdate, 'YYYY/MM/DD')) a,
+			(SELECT DISTINCT TO_CHAR(SYSDATE-LEVEL+1, 'YYYY/MM/DD') od
+			FROM ORDERS CONNECT BY LEVEL <= 7
+			ORDER BY od DESC) b
+		WHERE a.ord(+) = b.od
+		ORDER BY od DESC
+	]]>
+	</select>
+	
+	<!-- 담당매장 출근시간 조회 -->
+	<select id="getOnTime" resultType="ontime" parameterType="string">
+		SELECT a.ontime, s.frname
+		FROM (
+			SELECT frName, TO_CHAR(min(onTime), 'HH24:MI') onTime
+			FROM STORE s, EMPCHECKIN e, EMP e2
+			WHERE e2.empnum = s.EMPNUM
+			AND s.FRREGINUM = e.FRREGINUM 
+			AND to_char(ontime, 'yyyy-mm-dd') = to_char(sysdate, 'yyyy-mm-dd')
+			GROUP BY frName) a, store s
+		WHERE a.frName(+) = s.frName
+		AND s.empnum = #{empnum}
+	</select>
+</mapper>

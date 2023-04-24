@@ -1,0 +1,327 @@
+@charset "UTF-8";
+
+button:hover, .selectedFunction:hover, .unselectedFunction:hover {
+	cursor: pointer;
+}
+
+.containerJ {
+	width: 97%;
+}
+
+.toolbox {
+	background-color: #f8f9fa;
+	border-radius: 0.25em;
+	border: 1px solid transparent;
+	margin-bottom: .5rem;
+}
+.border{
+	border: 1px solid black;
+}
+
+.toolbar label {
+	margin-left: .5rem;
+}
+
+.h2Title {
+	border-bottom: 1px solid black;
+}
+
+.row {
+	display: flex;
+}
+
+.col {
+	display: flex;
+	flex-direction: column;
+}
+
+.pBtn_center{
+	justify-content: center;
+}
+
+.center {
+	text-align: center;
+}
+
+.left {
+	text-align: left;
+}
+
+.right {
+	text-align: right;
+}
+
+.border {
+	border: 1px solid black;
+}
+
+.margin {
+	margin: 20px;
+}
+
+.margin-sm {
+	margin: 5px;
+}
+
+.margin-tn {
+	margin: 0 20px 0 20px;
+}
+
+.margin-tln {
+	margin: 0 20px 5px 0;
+}
+
+.margin-radio {
+	margin-top: 10px;
+	margin-bottom: 20px;
+}
+
+label.margin-radio {
+	margin-left: 10px;
+}
+
+.regList {
+	padding-left: 15px;
+	width: 100%;
+	height: 40px;
+	border: 1px solid #a4a4a4;
+	border-radius: 5px;
+}
+
+button.regList {
+	padding-left: 15px;
+	width: 100%;
+	height: 40px;
+	border: 1px solid #DDD;
+	border-radius: 5px;
+}
+
+input[type="text"].regList:read-only, input[type="date"].regList:read-only
+	{
+	background-color: #efefef;
+}
+
+input[type="text"].listInput {
+	width: 100%;
+	height: 40px;
+	border: none;
+	font-size: large;
+}
+.fileFrm > div > div >input[type="text"] {
+	width: 100%;
+	height: 40px;
+	border: none;
+	font-size: large;
+	text-align: center;
+}
+.fileFrm > div > div >input[type="text"]:disabled {
+	background-color:white;
+}
+
+input[type="text"].listInput:disabled {
+	background-color: white;
+}
+input[type="text"].listInput:focus {
+	outline:none;
+}
+
+.w20 {
+	width: 20%;
+}
+
+.w25 {
+	width: 25%;
+}
+
+.w65 {
+	width: 65%;
+}
+
+.w100 {
+	width: 100%;
+}
+
+.regBtn {
+	width: 15%;
+	height: 40px;
+	font-size: large;
+	font-weight: 500;
+	color: white;
+	background-color: #007bff;
+	border: 1px solid #007bff;
+	border-radius: 5px;
+}
+
+.uptBtn{
+	background-color: #6c757d;
+	color: white;
+	border: none;
+	border-radius: 3px;
+	width: 40%;
+	padding: 3px;
+	margin-top: 7px;
+}
+
+.uptCfm {
+	background-color: #007bff;
+	color: white;
+	border: none;
+	border-radius: 3px;
+	width: 40%;
+	padding: 3px;
+	margin-top: 7px;
+}
+
+.delBtn {
+	background-color: #dc3545;
+	color: white;
+	border: none;
+	border-radius: 3px;
+	width: 40%;
+	padding: 3px;
+}
+
+.fileBtn {
+	background-color: #efefef;
+	border: 1px solid #e4e4e4;
+	border-radius: 3px;
+	padding: 3px;
+	margin-top: 7px;
+}
+
+.thDiv {
+	border-bottom: 2px solid #e4e4e4;
+	background-color: #efefef;
+	font-size: large;
+	text-align: center;
+	padding: 5px;
+}
+
+.tdDiv {
+	border-bottom: 1px solid #e4e4e4;
+	text-align: center;
+	font-size: large;
+	padding: 5px;
+}
+
+.pgBtnPrev {
+	border: 1px solid #e4e4e4;
+	border-radius: 10px 0 0 10px;
+	width: 2%;
+	padding: 3px;
+	margin-top: 7px;
+}
+
+.pgBtnNext {
+	border: 1px solid #e4e4e4;
+	border-radius: 0 10px 10px 0;
+	width: 2%;
+	padding: 3px;
+	margin-top: 7px;
+}
+
+.pgBtn {
+	border: 1px solid #e4e4e4;
+	border-radius: 3px;
+	width: 2%;
+	padding: 3px;
+	margin: 7px 2px 0 2px;
+}
+
+.hide {
+	display: none;
+}
+
+.schDiv {
+	text-align: right;
+	margin: 5px;
+	padding: 3px;
+}
+
+#frm01>.schDiv>div>input[type="text"] {
+	width: 100%;
+	height: 30px;
+}
+
+#frm01>.schDiv>div.left {
+	width: 55%;
+}
+
+#frm01>.schDiv>button {
+	width: 25%;
+	height: 30px;
+	background-color: #DDD;
+	border: none;
+	margin-top: 20px;
+	margin-left: 10px;
+}
+.monthDiv{
+	padding: 5px 10px 5px 10px;
+	background-color:#efefef;
+	border:1px solid #a4a4a4;
+	cursor: pointer;
+	height:30px;
+	font-size: 15px;
+}
+#reqSchFrm>.schDiv>div>input[type="text"] {
+	width: 100%;
+	height: 30px;
+}
+#reqSchFrm>.schDiv>div>select[name="category"] {
+	width: 100%;
+	height: 30px;
+}
+
+#reqSchFrm>.schDiv>div.left {
+	width: 65%;
+}
+
+#reqSchFrm>.schDiv>button {
+	width: 30%;
+	height: 30px;
+	background-color: #DDD;
+	border: none;
+	margin-top: 20px;
+	margin-left: 10px;
+	border-radius:5px;
+}
+.activeDiv{
+	background-color:blue;
+	color:white;
+}
+h2.h2Title > span#clerkname{
+	font-size: xx-large;
+}
+h2.h2Title > span#clerknum{
+	font-size: large;
+}
+h2.h2Title > span.clerknum{
+	font-size: large;
+}
+.clerkOntime{
+	padding:5px;
+}
+.refreshBtn{
+	position:relative;
+	font-size: xx-large;
+	padding:0;
+	height:30px;
+	width:30px;
+}
+.refreshText{
+	position:absolute;
+	top: -10px; 
+    left: -2px;
+    color:white;
+}
+.space-between{
+	justify-content: space-between;
+}
+.yearCheck{
+	width:70px;
+	padding-left: 5px;
+}
+.boxes-clerk {
+    width: 230px;
+    height: 350px;
+}

@@ -1,0 +1,8 @@
+@charset "UTF-8";
+.defectImg{
+	position:absolute;
+	width:250px;
+	height:200px;
+	border:1px solid #AAA;
+	display:none;
+}

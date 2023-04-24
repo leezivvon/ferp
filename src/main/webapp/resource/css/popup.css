@@ -1,0 +1,14 @@
+@charset "UTF-8";
+pre::-webkit-scrollbar {
+    width: 5px;  /* 스크롤바의 너비 */
+}
+
+pre::-webkit-scrollbar-thumb {
+    height: 30%; /* 스크롤바의 길이 */
+    background: darkgray; /* 스크롤바의 색상 */
+    border-radius: 10px;
+}
+
+pre::-webkit-scrollbar-track {
+    background: #ddd;  /*스크롤바 뒷 배경 색상*/
+}

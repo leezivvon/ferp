@@ -1,0 +1,522 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<c:set var="path" value="${pageContext.request.contextPath }" />
+<fmt:requestEncoding value="utf-8" />
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>매장정보 등록</title>
+<script src="https://developers.google.com/web/ilt/pwa/working-with-the-fetch-api" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<link rel="stylesheet" href="/ferp/resource/css/store_insert.css"/>
+<link rel="stylesheet" href="${path}/resource/css/reset.css"/>
+<link rel="stylesheet" href="${path}/resource/css/store_main_index.css"/>
+</head>
+<script type="text/javascript">
+	localStorage.setItem("pageIdx","4001")
+	localStorage.setItem("eqIdx","4000")
+</script>
+<body class="container">
+	<%@ include file="/resource/templates/header.jsp"%>
+	<div class="main_wrapper">
+		<%@ include file="/resource/templates/sidebar.jsp"%>
+		<div class="contents">
+    	    <h2 class="insert_product">매 장 정 보 등 록</h2>
+        	<div class="content">
+        	<form method="post">
+				<div class="first_line">
+					<h3 class="store_num">사업자번호</h3>
+					<h3 class="store_pass">비밀번호</h3>
+				</div>
+				<div class="second_line">
+					<input type="text" name="frRegiNum" placeholder="사업자번호 입력(숫자10자리) ex)8462550658">
+					<input type="password" name="frPass" placeholder="비밀번호 입력">
+				</div>
+				<div style="display: flex; justify-content: space-between;">
+					<p class="frRegiNumComment"></p>
+					<p class="frPassComment"></p>
+				</div>
+				<div class="third_line">
+					<h3 class="store_name">매장명</h3>
+					<h3 class="store_address">주소</h3>
+				</div>
+				<div class="fourth_line">
+					<input type="text" name="frName" placeholder="매장명 입력">
+					<input type="text" name="frAddress" id="frAddress" placeholder="주소 입력">
+				</div>
+				<div class="fifth_line">
+					<h3 class="store_opertime">운영시간</h3>
+					<h3 class="store_closeDte">휴무일</h3>
+				</div>
+				<div class="sixth_line">
+					<input type="text" name="frOperTime" placeholder="운영시간 입력 ex)09:00-24:00">				
+					<input type="text" name="frClosedDte" placeholder="휴무일 입력 ex)연중무휴, 금요일">
+				</div>
+				<div style="display: flex; justify-content: space-between;">
+					<p class="frOperTimeComment"></p>
+					<p class="frClosedDteComment"></p>
+				</div>
+				<div class="seventh_line">
+					<h3 class="store_repName">대표자명</h3>
+					<h3 class="store_tel">매장 전화번호</h3>
+				</div>
+				<div class="eighth_line">
+					<input type="text" name="frRepName" placeholder="대표자명 입력">				
+					<input type="text" name="frTel" placeholder="전화번호 입력">
+				</div>	
+				<div style="display: flex;justify-content: flex-end;">
+					<p class="frTelComment"></p>
+				</div>
+				<div class="ninth_line">
+					<h3 class="store_eno">담당직원</h3>
+					<h3 class="store_address">이메일</h3>
+				</div>
+				<div class="tenth_line">
+					<select name="empNum">
+						<option disabled="disabled" selected="selected">담당직원 선택</option>
+						<c:forEach var="emp" items="${empCombo}">
+							<c:if test="${emp.ename ne 'admin'}">
+								<c:if test="${emp.ename ne null}">
+									<option value="${emp.empnum}">${emp.ename}</option>
+								</c:if>
+							</c:if>
+						</c:forEach>
+					</select>	
+					<input type="text" name="email" placeholder="이메일 입력">
+				</div>
+				<div style="display: flex;justify-content: flex-end;">
+					<p class="emailComment"></p>
+				</div>			
+				
+						
+				<div class="submit_line">
+					<button type="button" class="insBtn">등 록</button>
+				</div>	
+			</form>		
+			</div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript">
+$(document).ready(function(){
+	var isPass1 = false;
+	var isPass2 = false;
+	var isPass3 = false;
+	var isPass4 = false;
+	var isPass5 = false;
+	var isPass6 = false;
+	var duplicate = true;
+	var arr = []
+	<c:forEach var="st" items="${storeNum}">
+		arr.push(${st})
+	</c:forEach>
+	
+	$("[name=frRegiNum]").keyup(function(){
+		var frRegiNum = $(this).val()
+		var regfrRegiNum = /^[0-9]{10}$/;
+		
+		for(var i = 0; i < arr.length; i++){
+			if(arr[i] == frRegiNum){
+				duplicate = false;
+			}
+		}
+	  if (frRegiNum.match(regfrRegiNum) != null) {
+	      $(this).removeClass("isNotPass")
+	      $(".frRegiNumComment").text("");
+	      isPass1 = true;
+	  }
+	  else{
+      	$(this).addClass("isNotPass")
+        $(".frRegiNumComment").text("숫자10자리로 입력해주세요. ex)1973249871")
+	  }
+	
+	  if(!duplicate){
+      	$(this).addClass("isNotPass")
+        $(".frRegiNumComment").text("등록된 사업자번호가 있습니다.")
+	  }
+	})
+	$("[name=frPass]").keyup(function(){
+		var pw = $(this).val()
+		var number = pw.search(/[0-9]/g);
+		var english = pw.search(/[a-z]/ig);
+		var spece = pw.search(/[`~!@@#$%^&*|₩₩₩'₩";:₩/?]/gi);
+		var reg = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
+		
+        if (pw.length < 5 || pw.length > 15) {
+        	$(this).addClass("isNotPass")
+            $(".frPassComment").text("5자리 ~ 15자리 이내로 입력해주세요.")
+        } else if (pw.search(/\s/) != -1) {
+        	$(this).removeClass("isNotPass")
+        	$(".frPassComment").text("비밀번호는 공백 없이 입력해주세요.")
+        	$(this).addClass("isNotPass")
+        } else if ((number < 0 && english < 0) || (english < 0 && spece < 0) || (spece < 0 && number < 0)) {
+        	$(this).removeClass("isNotPass")
+        	$(".frPassComment").text("영문,숫자, 특수문자 중 2가지 이상을 혼합하여 입력해주세요.")
+        	$(this).addClass("isNotPass")        	
+        } else if (/(\w)\1\1\1/.test(pw)) {
+        	$(this).removeClass("isNotPass")
+        	$(".frPassComment").text("같은 문자를 4번 이상 사용하실 수 없습니다.")
+        	$(this).addClass("isNotPass")       	
+        } else {
+        	$(this).removeClass("isNotPass")
+        	$(".frPassComment").text("");
+        	isPass2 = true;
+        }
+	})
+	
+	$("[name=frOperTime]").keyup(function(){
+		var frOperTime = $(this).val()
+		var regfrOperTime = /^(([0-1][0-9])|(2[0-3])):[0-5][0-9]-(([0-1][0-9])|(2[0-3])):[0-5][0-9]$/;
+		
+	  if (frOperTime.match(regfrOperTime) != null) {
+	      $(this).removeClass("isNotPass")
+	      $(".frOperTimeComment").text("");
+	      isPass3 = true;
+	  }else{
+      	$(this).addClass("isNotPass")
+        $(".frOperTimeComment").text("입력형식이 잘못되었습니다. ex)09:00-21:00")
+	  }
+	})
+	$("[name=frClosedDte]").keyup(function(){
+		var frClosedDte = $(this).val()
+		var regfrClosedDte = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;
+		
+	  if (frClosedDte.match(regfrClosedDte) != null) {
+	      $(this).removeClass("isNotPass")
+	      $(".frClosedDteComment").text("");
+	      isPass4 = true;
+	  }else{
+      	$(this).addClass("isNotPass")
+        $(".frClosedDteComment").text("한글만 입력가능합니다. ex)연중무휴, 월요일")
+	  }
+	})	
+	$("[name=frTel]").keyup(function(){
+		var tel = $(this).val()
+		var regTel = /^(070|02|0[3-9]{1}[0-9]{1})-[0-9]{3,4}-[0-9]{4}$/;
+		
+	  if (tel.match(regTel) != null) {
+	      $(this).removeClass("isNotPass")
+	      $(".frTelComment").text("");
+	      isPass5 = true;
+	  }else{
+      	$(this).addClass("isNotPass")
+        $(".frTelComment").text("전화번호 형식으로 입력해주세요. ex)02-357-6813")
+	  }
+		
+	})
+	$("[name=email]").keyup(function(){
+		var email = $(this).val()
+		var regEmail = /^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/i
+		
+	  if (email.match(regEmail) != null) {
+	      $(this).removeClass("isNotPass")
+	      $(".emailComment").text("");
+	      isPass6 = true;
+	  }else{
+      	$(this).addClass("isNotPass")
+        $(".emailComment").text("이메일형식으로 입력해주세요. ex)email@naver.com")
+	  }
+	})
+	
+    $(".insBtn").click(function(){
+		  Swal.fire({
+			  title: '등록하시겠습니까?',
+			  icon: 'question',
+			  showCancelButton: true, // cancel버튼 보이기. 기본은 원래 없음
+			  confirmButtonColor: '#3085d6', // confrim 버튼 색깔 지정
+			  cancelButtonColor: '#d33', // cancel 버튼 색깔 지정
+			  confirmButtonText: '확인', // confirm 버튼 텍스트 지정
+			  cancelButtonText: '취소' // cancel 버튼 텍스트 지정
+			}).then((result) => {
+			  if (result.value) {
+				  if($("[name=frRegiNum]").val() == ""){
+					  Swal.fire({
+						  title: '사업자번호를 입력해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frRegiNum]").focus()
+						      return;
+						  }
+					  })
+				  }
+				  else if($("[name=frPass]").val() == ""){
+					  Swal.fire({
+						  title: '비밀번호를 입력해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frPass]").focus()
+						      return;
+						  }
+					  })
+				  }
+				  else if($("[name=frName]").val() == ""){
+					  Swal.fire({
+						  title: '매장명을 입력해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frName]").focus()
+						      return;
+						  }
+					  })
+				  }
+				  else if($("[name=frAddress]").val() == ""){
+					  Swal.fire({
+						  title: '주소를 입력해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frAddress]").focus()
+						      return;
+						  }
+					  })
+				  }
+				  else if($("[name=frOperTime]").val() == ""){
+					  Swal.fire({
+						  title: '운영시간을 입력해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frOperTime]").focus()
+						      return;
+						  }
+					  })
+				  }
+				  else if($("[name=frClosedDte]").val() == ""){
+					  Swal.fire({
+						  title: '휴무일을 입력해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frClosedDte]").focus()
+						      return;
+						  }
+					  })
+				  }
+				  else if($("[name=frRepName]").val() == ""){
+					  Swal.fire({
+						  title: '대표자명를 입력해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frRepName]").focus()
+						      return;
+						  }
+					  })
+				  }
+				  else if($("[name=frTel]").val() == ""){
+					  Swal.fire({
+						  title: '전화번호를 입력해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frTel]").focus()
+						      return;
+						  }
+					  })
+				  }
+				  else if($("[name=empNum]").val() == null){
+					  Swal.fire({
+						  title: '담당직원을 선택해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+						      return;
+						  }
+					  })
+				  }
+				  else if($("[name=email]").val() == ""){
+					  Swal.fire({
+						  title: '이메일을 입력해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=email]").focus()
+						      return;
+						  }
+					  })
+				  }else if(!isPass1){
+					  Swal.fire({
+						  title: '사업자번호 형식을 확인해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frRegiNum]").focus()
+						      return;
+						  }
+					  })
+				  }else if(!isPass2){
+					  Swal.fire({
+						  title: '비밀번호 형식을 확인해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frPass]").focus()
+						      return;
+						  }
+					  })
+				  }else if(!isPass3){
+					  Swal.fire({
+						  title: '운영시간 형식을 확인해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frOperTime]").focus()
+						      return;
+						  }
+					  })
+				  }else if(!isPass4){
+					  Swal.fire({
+						  title: '휴무일 형식을 확인해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frClosedDte]").focus()
+						      return;
+						  }
+					  })
+				  }else if(!isPass5){
+					  Swal.fire({
+						  title: '매장 전화번호 형식을 확인해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frTel]").focus()
+						      return;
+						  }
+					  })
+				  }else if(!isPass6){
+					  Swal.fire({
+						  title: '이메일 형식을 확인해주세요.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=email]").focus()
+						      return;
+						  }
+					  })
+				  }else if(!duplicate){
+					  Swal.fire({
+						  title: '등록된 사업자번호가 있습니다.',
+						  icon: 'warning',
+						  showCancelButton: false,
+						  confirmButtonColor: '#3085d6',
+						  confirmButtonText: '확인'
+						}).then((result) => {
+						  if (result.value) {
+							  $("[name=frRegiNum]").focus()
+						      return;
+						  }
+					  })
+				  }
+				  else{
+					  $("form").submit();
+				  }
+				  
+			  }
+			})	    	
+  	})
+  	
+  	$("[name=frAddress]").click(function(){
+  		new daum.Postcode({
+            oncomplete: function(data) {
+                // 팝업에서 검색결과 항목을 클릭했을때 실행할 코드를 작성하는 부분.
+
+                // 각 주소의 노출 규칙에 따라 주소를 조합한다.
+                // 내려오는 변수가 값이 없는 경우엔 공백('')값을 가지므로, 이를 참고하여 분기 한다.
+                var addr = ''; // 주소 변수
+                var extraAddr = ''; // 참고항목 변수
+
+                //사용자가 선택한 주소 타입에 따라 해당 주소 값을 가져온다.
+                if (data.userSelectedType === 'R') { // 사용자가 도로명 주소를 선택했을 경우
+                    addr = data.roadAddress;
+                } else { // 사용자가 지번 주소를 선택했을 경우(J)
+                    addr = data.jibunAddress;
+                }
+
+                // 사용자가 선택한 주소가 도로명 타입일때 참고항목을 조합한다.
+                if(data.userSelectedType === 'R'){
+                    // 법정동명이 있을 경우 추가한다. (법정리는 제외)
+                    // 법정동의 경우 마지막 문자가 "동/로/가"로 끝난다.
+                    if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+                        extraAddr += data.bname;
+                    }
+                    // 건물명이 있고, 공동주택일 경우 추가한다.
+                    if(data.buildingName !== '' && data.apartment === 'Y'){
+                        extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                    }
+                    // 표시할 참고항목이 있을 경우, 괄호까지 추가한 최종 문자열을 만든다.
+                    if(extraAddr !== ''){
+                        extraAddr = ' (' + extraAddr + ')';
+                    }
+                    // 조합된 참고항목을 해당 필드에 넣는다.
+                
+                } 
+
+                // 우편번호와 주소 정보를 해당 필드에 넣는다.
+                document.getElementById("frAddress").value = addr;
+            }
+        }).open();
+  	})
+
+
+});
+</script>
+</html>

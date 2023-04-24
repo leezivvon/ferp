@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ferp.dao.A2_Dao">
+	<!-- 직원정보조회/등록/수정/삭제 -->
+	<select id="storeClerkList" parameterType="storeclerksch" resultType="storeclerk">
+		select *
+			from (
+				select rownum cnt, s.*
+				from storeclerk s
+				where 1=1
+				and clerkname LIKE '%'||#{clerkName}||'%'
+				and frRegiNum = #{frRegiNum}
+				AND s.hourlypay != 0
+				)
+			where cnt between #{start} and #{end}
+	</select>
+	<select id="clerkTot" resultType="int" parameterType="string">
+		select count(*)+1001 from storeclerk where frRegiNum = #{frRegiNum}
+	</select>
+	<insert id="insStoreclerk" parameterType="storeclerk">
+		INSERT INTO storeclerk values(#{clerkNum},#{frRegiNum},#{clerkName},#{residentNum},#{phoneNum},#{address},#{hourlyPay},#{gender})
+	</insert>
+	<select id="totNum" parameterType="storeclerksch" resultType="int">
+		SELECT COUNT(*)
+		FROM storeclerk
+		WHERE 1=1
+		AND clerkname LIKE '%'||#{clerkName}||'%'
+		AND frRegiNum = #{frRegiNum}
+		and hourlypay != 0
+	</select>
+	<update id="uptStoreClerk" parameterType="storeclerk">
+		UPDATE storeclerk
+			SET clerkName = #{clerkName},
+				gender = #{gender},
+				residentNum = #{residentNum},
+				phoneNum = #{phoneNum},
+				address = #{address},
+				hourlyPay = #{hourlyPay}
+		WHERE clerkNum = #{clerkNum}
+	</update>
+	<update id="delStoreClerk" parameterType="string">
+		UPDATE STORECLERK
+			SET hourlyPay = 0
+		WHERE clerkNum = #{clerkNum}
+	</update>
+	<!-- 직원 급여액 조회 -->
+	<select id="storeClerkPayList" parameterType="storeclerksch" resultType="storeclerk">
+		SELECT *
+		from(
+			SELECT rownum cnt, a.* FROM (
+				SELECT nvl(TRUNC(h.workHOUR,1),0) workhour, nvl(TRUNC(h.workHOUR * s.hourlypay,-2),0) pay,s.*
+				FROM (SELECT CLERKNUM ,sum((OFFTIME-ONTIME) * 24) workhour
+				FROM EMPCHECKIN e 
+				WHERE to_char(to_date(OFFTIME ,'YYYY-MM-DD HH24:MI:SS'),'MONTH') LIKE '%'||#{orderDateMonth}||'%'
+				AND EXTRACT(YEAR FROM OFFTIME) LIKE '%'||#{orderDateYear}||'%'
+				GROUP BY CLERKNUM) h, storeclerk s  
+				WHERE h.clerknum(+) = s.clerknum
+				AND s.clerkname LIKE '%'||#{clerkName}||'%'
+				AND frreginum = #{frRegiNum}
+				AND s.hourlypay != 0
+				ORDER BY s.clerknum
+			) a
+		)
+		where cnt between #{start} and #{end}
+	</select>
+	<!-- 자재 리스트 조회 -->
+	<select id="availProd" parameterType="rqproduct" resultType="rqproduct">
+		SELECT * FROM PRODUCT p , (SELECT PRODUCTNUM, REMAINAMOUNT, frreginum, stockdate, applyamount  FROM STOCK WHERE STOCKDATE IN 
+					(SELECT max(STOCKDATE) FROM stock WHERE frreginum = '9999999999' GROUP BY PRODUCTNUM)) h
+		WHERE p.PRODUCTNUM = h.PRODUCTNUM(+)
+		AND PRODUCTNAME LIKE '%'||#{productName}||'%'
+	</select>
+	<!-- 발주 신청 등록 -->
+	<insert id="prodOrderReq" parameterType="prodProdOrder">
+		INSERT INTO PRODORDER VALUES(
+		(SELECT to_char(to_date(#{orderDate},'yy-mm-dd'),'yymmdd') FROM dual)||#{demander},
+		#{productNum},#{demander},#{supplier},sysdate,#{amount},'정산전','요청')
+	</insert>
+	<!-- 발주 신청서 조회 -->
+	<select id="reqList" parameterType="prodProdOrder" resultType="prodProdOrder">
+		SELECT * FROM (
+			SELECT rownum cnt, a.* FROM (
+				SELECT po.*, p.img, p.PRODUCTNAME, p.CATEGORY, p.OPPOSITE , s.REMAINAMOUNT 
+				FROM PRODUCT p, PRODORDER po, STOCK s 
+				WHERE p.PRODUCTNUM = po.PRODUCTNUM
+				AND s.PRODUCTNUM = p.PRODUCTNUM
+				AND STOCKDATE IN (SELECT max(STOCKDATE) FROM stock where frreginum = '9999999999' GROUP BY PRODUCTNUM)
+				AND p.PRODUCTNAME LIKE '%'||#{productName}||'%' 
+				AND p.CATEGORY LIKE '%'||#{category}||'%'
+				AND to_char(to_date(ORDERDATE,'YYYY-MM-DD HH24:MI:SS'),'MONTH') LIKE '%'||#{orderDateMonth}||'%' 
+				AND EXTRACT(YEAR FROM ORDERDATE) LIKE '%'||#{orderDateYear}||'%'
+				AND DEMANDER = #{demander}
+				ORDER BY to_char(orderdate, 'YYMMDD HH24:MI:SS') DESC) a
+			)
+		where cnt between #{start} and #{end}
+	</select>
+	<select id="totNumProdOrder" parameterType="prodProdOrder" resultType="int">
+		SELECT count(*) FROM (
+		SELECT po.*, p.img, p.PRODUCTNAME, p.CATEGORY, p.OPPOSITE 
+		FROM PRODUCT p, PRODORDER po
+		WHERE p.PRODUCTNUM = po.PRODUCTNUM
+		AND p.PRODUCTNAME LIKE '%'||#{productName}||'%' 
+		AND p.CATEGORY LIKE '%'||#{category}||'%'
+		AND to_char(to_date(ORDERDATE,'YYYY-MM-DD HH24:MI:SS'),'MONTH') LIKE '%'||#{orderDateMonth}||'%' 
+		AND EXTRACT(YEAR FROM ORDERDATE) LIKE '%'||#{orderDateYear}||'%'
+		AND DEMANDER = #{demander})
+	</select>
+	<!-- 발주 신청서 수정 -->
+	<update id="uptReqList" parameterType="prodProdOrder">
+		UPDATE (SELECT po.*, p.img, p.PRODUCTNAME
+				FROM PRODUCT p, PRODORDER po
+				WHERE p.PRODUCTNUM = po.PRODUCTNUM)
+			SET amount = #{amount}
+		WHERE ordernum = #{orderNum}
+		AND productnum = #{productNum}
+		AND orderdate = to_date(#{orderDate},'YYYY-MM-DD HH24:MI:SS')
+	</update>
+	<update id="delReqList" parameterType="prodProdOrder">
+		UPDATE PRODORDER
+			SET orderState = '발주취소'
+		WHERE ordernum = #{orderNum}
+		AND productnum = #{productNum}
+		AND orderdate = to_date(#{orderDate},'YYYY-MM-DD HH24:MI:SS')
+	</update> 
+	<!-- 카테고리 콤보박스 -->
+	<select id="cateCombo" resultType="rqproduct">
+		SELECT DISTINCT category FROM product
+	</select>
+	<!-- 직원 파일 업로드 -->
+	<insert id="clerkfileupl" parameterType="clerkfile">
+		INSERT INTO CLERKFILE values(#{fname},sysdate,sysdate,#{clerkNum},#{frRegiNum},'')
+	</insert>
+	<select id="viewClerkFileInfo" parameterType="clerkfile" resultType="clerkfile">
+		SELECT * 
+		from(
+			SELECT rownum cnt, a.*
+			from(
+				SELECT * 
+				FROM CLERKFILE c
+				WHERE CLERKNUM LIKE '%'||#{clerkNum}||'%'
+				AND FRREGINUM = #{frRegiNum}
+				ORDER BY uptdte DESC
+				) a
+			)
+		ORDER BY cnt
+	</select>
+	<update id="clerkFileUpt" parameterType="clerkfile">
+		UPDATE CLERKFILE 
+			SET UPTDTE = SYSDATE,
+				fileinfo = #{fileInfo}
+		WHERE FNAME = #{fname}
+		AND CLERKNUM = #{clerkNum}
+		AND FRREGINUM  = #{frRegiNum}
+	</update>
+	<delete id="clerkFileDel" parameterType="clerkfile">
+		DELETE FROM clerkfile 
+		WHERE FNAME = #{fname}
+		AND CLERKNUM = #{clerkNum}
+		AND FRREGINUM  = #{frRegiNum}
+	</delete>
+	<select id="salesGraph" parameterType="sales" resultType="sales">
+	SELECT nvl(tot,0) AS tot, b.orderdate
+	FROM (
+		SELECT to_char(orderdate, 'YYYY/MM/DD') ord, nvl(sum(PAYPRICE),0) tot
+		FROM ORDERS
+		WHERE state = '완료'
+		AND frreginum = #{frRegiNum}
+		GROUP BY to_char(orderdate, 'YYYY/MM/DD')) a,
+		(SELECT DISTINCT TO_CHAR(SYSDATE-LEVEL+1, 'YYYY/MM/DD') orderdate
+		FROM ORDERS CONNECT BY LEVEL <![CDATA[<=]]> 7
+		ORDER BY orderdate DESC) b
+		WHERE a.ord(+) = b.orderdate
+		ORDER BY orderdate DESC
+	</select>
+	<select id="storeclerkSchedule" parameterType="storeclerk" resultType="storeclerk">
+		SELECT to_char(ontime, 'HH24:MI:SS') ontime, to_char(offtime, 'HH24:MI:SS') offtime,clerkName,s.clerkNum,hourlypay FROM (
+		SELECT e.ONTIME,e.offtime, e.CLERKNUM 
+		FROM STORECLERK s ,EMPCHECKIN e 
+		WHERE s.FRREGINUM = e.FRREGINUM
+		AND s.CLERKNUM = e.CLERKNUM
+		AND to_char(to_date(ontime,'YYYY-MM-DD HH24:MI:SS'),'MM/DD') = to_char(sysdate,'MM/DD')) a, storeclerk s
+		WHERE a.clerknum(+) = s.CLERKNUM 
+		AND s.FRREGINUM = #{frRegiNum}
+		AND hourlypay != 0
+		ORDER BY s.CLERKNUM ASC
+	</select>
+	<select id="defectOrderTot" parameterType="string" resultType="int">
+		SELECT count(*)+101
+		FROM DEFECTORDER d
+		WHERE FRREGINUM = #{frRegiNum}
+	</select>
+	<select id="viewDefectorder" parameterType="defectorder" resultType="defectorder">
+		SELECT * FROM (
+			SELECT rownum cnt, a.* FROM (	
+				SELECT d.DEFNUM ,p.ORDERNUM, p2.productName, p2.CATEGORY, d.METHODS, d.IMG, d.STATE, d.APPLYDATE,p.ORDERDATE ,d.frreginum, d.type, d.completeDate
+				FROM DEFECTORDER d, PRODORDER p, PRODUCT p2 
+				WHERE d.ORDERNUM = p.ORDERNUM 
+				AND d.ORDERDATE = p.ORDERDATE 
+				AND p.PRODUCTNUM = p2.PRODUCTNUM 
+				AND frreginum = #{frRegiNum}
+				AND p2.PRODUCTNAME  LIKE '%'||#{productName}||'%'
+				AND p2.CATEGORY  LIKE '%'||#{category}||'%'
+				AND to_char(to_date(d.APPLYDATE,'YYYY-MM-DD HH24:MI:SS'),'MONTH') LIKE '%'||#{orderDateMonth}||'%' 
+				AND EXTRACT(YEAR FROM d.APPLYDATE) LIKE '%'||#{orderDateYear}||'%'
+				ORDER BY d.APPLYDATE DESC) a
+			)
+		where cnt between #{start} and #{end}
+	</select>
+	<select id="totDefectOrder" parameterType="defectorder" resultType="int">
+		SELECT count(*)
+		FROM DEFECTORDER d, PRODORDER p, PRODUCT p2 
+		WHERE d.ORDERNUM = p.ORDERNUM 
+		AND d.ORDERDATE = p.ORDERDATE 
+		AND p.PRODUCTNUM = p2.PRODUCTNUM 
+		AND frreginum = #{frRegiNum}
+		AND p2.PRODUCTNAME  LIKE '%'||#{productName}||'%'
+		AND p2.CATEGORY  LIKE '%'||#{category}||'%'
+		AND to_char(to_date(d.APPLYDATE,'YYYY-MM-DD HH24:MI:SS'),'MONTH') LIKE '%'||#{orderDateMonth}||'%' 
+		AND EXTRACT(YEAR FROM d.APPLYDATE) LIKE '%'||#{orderDateYear}||'%'
+	</select>
+	<insert id="insertDefectOrder" parameterType="defectorder">
+		INSERT INTO DEFECTORDER values
+		(#{frRegiNum}||#{defNum},#{orderNum},#{productNum},sysdate,#{img},'처리 대기',#{methods},to_date(#{orderDate},'yyyy-MM-dd HH24:MI:SS'),#{frRegiNum},#{type},'')
+	</insert>
+	<update id="prodOrderToDefected" parameterType="defectorder">
+	UPDATE PRODORDER
+		SET ORDERSTATE = '조정중'
+	WHERE DEMANDER = #{frRegiNum}
+	AND ORDERNUM  = #{orderNum}
+	AND PRODUCTNUM = #{productNum}
+	AND ORDERDATE =to_date(#{orderDate},'YYYY-MM-DD HH24:MI:SS')
+	</update>
+	<select id="past5years" resultType="storeclerk">
+		SELECT DISTINCT (TO_char(sysdate, 'YYYY')+1 - (LEVEL)) AS years FROM STORECLERK 
+		CONNECT BY LEVEL <![CDATA[<=]]> 5
+		ORDER BY years DESC
+	</select>
+	<!-- <delete id="deleteDefectOrder" parameterType="defectorder">
+		DELETE FROM DEFECTORDER WHERE DEFNUM = #{defNum}
+	</delete> -->
+</mapper>

@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="ferp.dao.C2_Dao">
+
+	<!-- 본사/매장 재고 조회 -->
+	<select id="r8101ProductList" resultType="productProdOrder" parameterType="productProdOrder">
+		SELECT p.*, s.stockDate, s.REMAINAMOUNT, s.FRREGINUM 
+		FROM PRODUCT p, STOCK s
+		WHERE p.PRODUCTNUM = s.PRODUCTNUM
+		AND s.FRREGINUM = #{frRegiNum,jdbcType=VARCHAR, index=1}
+		AND (s.PRODUCTNUM, s.STOCKDATE) IN (
+		    SELECT PRODUCTNUM, MAX(STOCKDATE)
+		    FROM STOCK
+		    WHERE FRREGINUM = #{frRegiNum,jdbcType=VARCHAR, index=1}
+		    GROUP BY PRODUCTNUM
+		)
+		AND s.stockDate LIKE '%'|| to_date(#{stockDate},'YYYY-MM-DD')||'%'
+		AND p.productNum LIKE '%'||upper(#{productNum})||'%'
+		AND category LIKE '%'||#{category}||'%'
+		AND productName LIKE '%'||#{productName}||'%'
+		AND opposite LIKE '%'||#{opposite}||'%'
+	</select>
+	
+	<!-- 본사/매장 재고 상세 페이지 -->
+	<select id="r8101ProductInfo" resultType="product" parameterType="string">
+		SELECT *
+		FROM PRODUCT
+		WHERE productNum like '%'||#{productNum,jdbcType=VARCHAR}||'%'
+	</select>
+	
+	<!-- 본사/매장 재고 입출고 조회 -->
+	<select id="r8204InoutList" resultType="productProdOrder" parameterType="productProdOrder">
+		SELECT * FROM 
+			(SELECT rownum cnt , a.* FROM 
+			(SELECT s.STOCKDATE ,p.category ,p.PRODUCTNUM ,p.PRODUCTNAME ,
+				p.PRICE ,s.APPLYAMOUNT ,s.REMAINAMOUNT, s.remark
+			FROM PRODUCT p, STOCK s
+			WHERE p.PRODUCTNUM = s.PRODUCTNUM
+			AND s.FrRegiNum = #{frRegiNum,jdbcType=VARCHAR}
+			AND p.productNum LIKE '%'||upper(#{productNum,jdbcType=VARCHAR})||'%'
+			ORDER BY s.STOCKDATE DESC) a )
+			WHERE cnt BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="inoutListTot" resultType="int" parameterType="productProdOrder">
+		SELECT count(*)
+		FROM PRODUCT p, STOCK s
+		WHERE p.PRODUCTNUM = s.PRODUCTNUM
+		AND s.FrRegiNum = #{frRegiNum}
+		AND p.productNum LIKE '%'||upper(#{productNum})||'%'
+	</select>
+	
+	<!-- 매장 재고 입출고 등록 -->
+	<insert id="r8103InoutIns" parameterType="stock">
+		INSERT INTO STOCK 
+	    VALUES (
+	        #{productNum,jdbcType=VARCHAR, index=1}, 
+	        #{frRegiNum,jdbcType=VARCHAR, index=3}, 
+	        SYSDATE, 
+	        #{applyAmount, index=2}, 
+	        COALESCE(
+	            (
+	                SELECT REMAINAMOUNT + #{applyAmount, index=2}
+	                FROM STOCK 
+	                WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR, index=1}
+	                AND FRREGINUM = #{frRegiNum,jdbcType=VARCHAR, index=3} 
+	                AND STOCKDATE = (
+	                    SELECT MAX(STOCKDATE) 
+	                    FROM STOCK 
+	                    WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR, index=1}
+	                    AND FRREGINUM = #{frRegiNum,jdbcType=VARCHAR, index=3}
+	                )
+	            ),
+	            #{applyAmount, index=2}
+	        ),#{remark,jdbcType=VARCHAR}
+	    )
+	</insert>
+	
+	<!-- 매장 재고 입출고 수정 -->
+	<update id="r8104InoutUpt" parameterType="stock">
+		UPDATE STOCK 
+		SET APPLYAMOUNT = #{applyAmount,INDEX=1},
+		    REMAINAMOUNT = (
+		        SELECT REMAINAMOUNT + #{applyAmount,INDEX=1} - APPLYAMOUNT 
+		        FROM (
+		            SELECT REMAINAMOUNT, ROW_NUMBER() OVER (ORDER BY STOCKDATE DESC) AS RN 
+		            FROM STOCK 
+		            WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR,INDEX=2}
+		            AND FRREGINUM = #{frRegiNum,jdbcType=VARCHAR,INDEX=3}
+		        ) T 
+		        WHERE RN = 1
+		    )
+		WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR,INDEX=2} 
+		AND STOCKDATE = (SELECT MAX(STOCKDATE) 
+			FROM STOCK 
+			WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR,INDEX=2})
+			AND FRREGINUM = #{frRegiNum,jdbcType=VARCHAR,INDEX=3}
+	</update>
+	
+	<!-- 매장 재고 입출고 삭제 -->
+	<delete id="r8105InoutDel" parameterType="stock">
+		DELETE FROM STOCK 
+		WHERE productNum = #{productNum}
+		AND applyAmount = #{applyAmount} 
+		AND remainAmount = #{remainAmount}
+	</delete>
+	<update id="r8105InoutDel2" parameterType="stock">
+		UPDATE STOCK 
+		SET REMAINAMOUNT = (
+		    SELECT REMAINAMOUNT + #{applyAmount,jdbcType=VARCHAR}
+		    FROM STOCK 
+		    WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR,INDEX=1} 
+		    AND FRREGINUM = #{frRegiNum,jdbcType=VARCHAR,INDEX=2} 
+		    AND STOCKDATE = (
+		        SELECT MAX(STOCKDATE) 
+		        FROM STOCK 
+		        WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR,INDEX=1} 
+		        AND FRREGINUM = #{frRegiNum,jdbcType=VARCHAR,INDEX=2}
+		    )
+		)
+		WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR,INDEX=1} 
+		AND FRREGINUM = #{frRegiNum,jdbcType=VARCHAR,INDEX=2}
+		AND STOCKDATE = (
+	        SELECT MAX(STOCKDATE) 
+	        FROM STOCK 
+	        WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR,INDEX=1} 
+	        AND FRREGINUM = #{frRegiNum,jdbcType=VARCHAR,INDEX=2}
+	    )
+	</update>
+	
+	<!-- 본사 재고 등록 -->
+	<insert id="r8202ProductIns" parameterType="productStock">
+		INSERT ALL
+			INTO PRODUCT (PRODUCTNUM, CATEGORY, PRODUCTNAME, OPPOSITE, PRICE, IMG, REMARK)
+				VALUES ('PD'||FERD.PDSEQ.CURRVAL, #{category}, #{productName}, #{opposite}, #{price}, #{img}, #{remark})
+			INTO STOCK (PRODUCTNUM, FRREGINUM, STOCKDATE, APPLYAMOUNT, REMAINAMOUNT, REMARK)
+				VALUES ('PD'||FERD.PDSEQ.CURRVAL, '9999999999', SYSDATE, 0, 0, NULL)
+		SELECT * FROM DUAL
+	</insert>
+	<select id="getNextval" resultType="string">
+		SELECT 'PD' || PDSEQ.NEXTVAL AS SEQ FROM DUAL
+	</select>
+	
+	<!-- 본사 재고 수정 -->
+	<update id="r8203ProductUpt" parameterType="product">
+		UPDATE PRODUCT 
+		SET REMARK  = #{remark}
+		WHERE PRODUCTNUM = #{productNum,jdbcType=VARCHAR}
+	</update>
+		
+	<!-- 자재 코드 콤보 -->
+	<select id="productNumCom" resultType="stock">
+		SELECT DISTINCT PRODUCTNUM, frRegiNum
+		FROM STOCK
+		ORDER BY PRODUCTNUM
+	</select>
+	
+	<!-- 직원 번호 콤보 -->
+	<select id="clerkNumCom" resultType="storeclerk">
+		SELECT DISTINCT CLERKNUM, CLERKNAME , frRegiNum
+		FROM STORECLERK 
+		WHERE HOURLYPAY !=0
+		ORDER BY CLERKNAME
+	</select>
+	
+	<!-- 직원스케줄 캘린더 등록 -->
+	<insert id="sclerkschdIns" parameterType="clerkschedule">
+		INSERT INTO CLERKSCHEDULE values(#{onDay},#{offDay},#{clerkNum},#{FrRegiNum})
+	</insert>
+	
+	<!-- 직원스케줄 캘린더 -->
+	<resultMap type="java.util.HashMap" id="calMap">
+		<result column="clerkName" property="title"/>
+		<result column="frRegiNum" property="writer"/>
+		<result column="onDay" property="start"/>
+		<result column="offDay" property="end"/>
+	</resultMap>
+	<select id="sclerkschd" resultMap="calMap">
+		SELECT c.*, clerkName 
+		FROM CLERKSCHEDULE c, STORECLERK s 
+		WHERE c.CLERKNUM = s.CLERKNUM 
+		AND c.FRREGINUM = #{writer}
+		AND s.HOURLYPAY !=0
+	</select>
+	
+	<!-- 직원스케줄 캘린더 삭제 -->
+	<delete id="sclerkschdDel" parameterType="clerkschedule">
+	    DELETE FROM CLERKSCHEDULE
+	    WHERE CLERKNUM IN (
+	        SELECT c.CLERKNUM
+	        FROM CLERKSCHEDULE c, STORECLERK s
+	        WHERE c.CLERKNUM = s.CLERKNUM
+	        AND c.ONDAY = #{onDay}
+	        AND s.clerkName = #{clerkName})
+	</delete>
+	
+	<!-- 본사 직원 점검일 배정 -->
+	
+	
+</mapper>

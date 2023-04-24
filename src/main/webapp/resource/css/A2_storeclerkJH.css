@@ -1,0 +1,39 @@
+@charset "UTF-8";
+.selectedFunction{
+	padding-top:10px;
+	padding-bottom:10px;
+	padding-left:25px;
+	padding-right:25px;
+	border-radius:0 30px 0 0;
+	border:1px solid black;
+	border-bottom:none;
+	background-color:white;
+	height:43px;
+	position: absolute;
+	z-index:999;
+}
+.unselectedFunction{
+	padding-top:10px;
+	padding-bottom:10px;
+	padding-left:25px;
+	padding-right:25px;
+	border-radius:0 30px 0 0;
+	border:1px solid #a4a4a4;
+	background-color:#e4e4e4;
+	position: absolute;
+}
+.firstOp{
+	z-index:4;
+}
+.secondOp{
+	margin-left: 105px;
+	z-index:3;
+}
+.thirdOp{
+	margin-left: 210px;
+	z-index:2;
+}
+.fourthOp{
+	margin-left: 330px;
+	z-index:1;
+}

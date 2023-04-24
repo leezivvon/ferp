@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<typeAliases>
+	<typeAlias alias="stock" type="vo.Stock"/>
+	<typeAlias alias="account" type="vo.Account"/>
+	<typeAlias alias="product" type="vo.Product"/>
+	</typeAliases>
+			
+<mappers>
+		<mapper resource="ferp/resource/mappers/C1_Mapper.xml"/>
+		<mapper resource="ferp/resource/mappers/C2_Mapper.xml"/>
+</mappers>
+	
+</configuration>

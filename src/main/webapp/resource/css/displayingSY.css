@@ -1,0 +1,158 @@
+@charset "UTF-8";
+
+.toolbox {
+	background-color: #f8f9fa;
+	border-radius: 0.25em;
+	border: 1px solid transparent;
+	margin-bottom: .5rem;
+}
+
+.toolbox h3 {
+	padding-top: .5rem;
+	padding-left: .5rem;
+}
+
+.toolbar {
+	margin-top: 0px;
+	margin-bottom: .5rem;
+	padding: .5rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background-color: #f8f9fa;
+	border-radius: .25rem;
+	border: 1px solid transparent;
+}
+
+.toolbar div {
+	display: inline-block;
+}
+
+.toolbar label {
+	margin-left: .5rem;
+	display: inline-block;
+}
+
+.toolbar label input, select {
+	display: block;
+}
+
+table input {
+	width: 100%;
+}
+
+table input[type=checkbox] {
+	height: 1.4em;
+	width: 1.4em;
+}
+
+input:disabled {
+	background-color: #f8f9fa;
+}
+
+input:read-only{
+	border:none;
+}
+
+.valid-feedback {
+	display: none;
+	width: 100%;
+	margin-top: .25rem;
+	font-size: 80%;
+	color: #28a745
+}
+
+.invalid-feedback {
+	display: block;
+	width: 100%;
+	margin-top: .25rem;
+	font-size: 80%;
+	color: #dc3545
+}
+
+label span.invalid-feedback {
+	display: inline;
+	width: 100%;
+	margin-top: .25rem;
+	margin-left: .25rem;
+	margin-right: .25rem;
+	font-size: 80%;
+	color: #dc3545
+}
+
+.is-valid {
+	border-color: #28a745
+}
+
+.is-valid:focus {
+	border-color: #28a745;
+	box-shadow: 0 0 0 .2rem rgba(40, 167, 69, .25)
+}
+
+.is-invalid {
+	border-color: #dc3545
+}
+
+.is-invalid:focus {
+	box-shadow: 0 0 0 1px #fff, 0 0 0 .2rem rgba(220, 53, 69, .25)
+}
+
+fieldset {
+	display: inline;
+	border: 0;
+	padding: 0;
+	margin: 0;
+}
+
+.modal-open {
+	background-color: rgba(0, 0, 0, 0.3);
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 10;
+	overflow: hidden;
+	display: flex;
+}
+
+.modal {
+	display: none;
+}
+
+.modal-dialog {
+	position: relative;
+	width: auto;
+	margin: auto;
+	align-items: center;
+	background-color: #fff;
+	border: 1px solid rgba(0, 0, 0, .2);
+	border-radius: .3rem;
+}
+
+.modal-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	align-items:center;
+	padding-left:1em;
+	padding-right: 1em;
+	padding-top:1em;
+	padding-bottom: 0;
+}
+
+.modal-body{
+	padding:1em;
+}
+.btn-close{position: relative;}
+.btn-close::after{
+	background-image: url("/ferp/resource/img/btn-close.png");
+	background-position:center;
+  	background-size:contain;
+	content: '';
+  	position: absolute;
+  	top: 0.6em;
+  	right: 0.6em;
+	width: 1em;
+	height: 1em;
+	}

@@ -1,0 +1,119 @@
+@charset "UTF-8";
+.container{
+    width: 100%;
+    max-width: 1536px;
+    min-width: 1200px;
+    margin: auto;
+}
+
+header{
+    width: 100%;
+    border-bottom: 1px solid #999;
+}
+
+.logo{
+    width: 119px;
+    margin: auto;
+    padding: 70px 0;
+}
+
+.main_wrapper{
+    width: 100%;
+    display: flex;
+}
+
+.lnb{
+    width: 250px;
+    height: 100%;
+}
+
+.contents{
+    width: 1286px;
+    border-left: 1px solid #999;
+    padding: 50px;
+}
+
+/* 메뉴 css */
+
+.lnb>ul>li{
+    border-bottom: 1px solid #999;
+    position: relative;
+}
+
+.lnb>ul>li>a{
+    height: 41px;
+    line-height: 44px;
+    font-size: 20px;
+    padding-left: 10px;
+    font-weight: 600;
+    color: #2262F3;
+
+}
+
+.lnb>ul>li>a:after{
+width: 18px;
+height: 16px;
+background: url(ferp/resource/img/menu_icon_down.png);
+position: absolute;
+top: 11px;
+right: 14px;
+content: "";
+}
+
+.lnb>ul>li.active>a:after{
+    background: url(ferp/resource/img/menu_icon_up.png);
+}
+
+.lnb>ul>li>ul>li:hover{
+    background-color: #eee;
+}
+
+.lnb>ul>li>ul>li>a{
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 32px;
+    padding-left: 20px;
+    color: #333;
+}
+
+.lnb ul ul{
+    display: none;
+}
+
+.main_banner{
+    border: 1px solid #222;
+    width: 1000px;
+    height: 300px;
+    margin: auto;
+    font-size: 50px;
+}
+
+.btm_content{
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    padding-top: 50px;
+}
+
+.btm_content h3{
+    line-height: 50px;
+    font-weight: 400;
+    font-size: 25px;
+}
+
+.notice{
+    width: 475px;
+    height: 400px;
+
+}
+
+.boxes{
+    width: 475px;
+    height: 350px;
+    border: 1px solid black;
+}
+
+.schedule{
+    width: 475px;
+    height: 400px;
+}

@@ -1,0 +1,153 @@
+@charset "UTF-8";
+section{
+    width: 100%;
+    padding: 20px 0;
+}
+
+.main_wrapper{
+    width: 1200px;
+    margin: auto;
+}
+
+
+h3{
+	letter-spacing: 3px;
+}
+
+
+input::placeholder{
+	letter-spacing: 0.5px;
+	font-weight: bold;
+}
+select{
+	height: 40px;
+	border-radius: 7px;
+	border: 2px solid #dddddd;
+	outline: none;
+	padding-left: 5px;
+	font-size: 13px;
+	transition:.3s;	
+}
+
+
+input:focus{ 
+	outline:none;  /* 테두리 없애기 */
+	border-color:dodgerBlue;
+	box-shadow:0 0 8px 0 dodgetBlue;
+} 
+
+
+
+.notice_main{
+	margin-top: 20px;
+	padding-bottom: 20px;
+	border-bottom: 3px solid black;
+}
+
+.title_line{
+	display: flex;
+    align-items: center;
+    border-bottom: 3px solid black;
+    justify-content: space-between;
+}
+.notice_title{
+	margin-top: 10px;
+    padding-bottom: 10px;
+}
+.content{
+	margin-bottom: 30px;
+}
+
+.sch_line{
+	margin-top: 35px;
+}
+input{
+	width: 25%;	
+	height: 40px;
+	border-radius: 7px;
+	border: 2px solid #dddddd;
+	outline: none;
+	padding-left: 15px;
+    margin-right: 15px;
+	font-size: 13px;
+	transition:.3s;
+}
+
+pre{
+	white-space: pre-line;
+	font-family: '맑은 고딕';
+    font-size: 15px;
+}
+
+.notice_content{
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 30px;
+    border-bottom: 1px solid black;
+    padding-bottom: 30px;
+}
+.file_line{
+	margin-top: 30px;
+}
+.file_line label{
+    margin-right: 10px;
+}
+
+.btn_line{
+	margin-top: 25px;
+	float: right;
+}
+.btn_line #goMain{
+    width: 90px;
+    height: 40px;
+    text-align: center;
+    border-radius: 10px;
+    color: white;
+    background: rgb(96, 149, 160);
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+}
+.btn_line #replyBtn{
+    width: 90px;
+    height: 40px;
+    text-align: center;
+    border-radius: 10px;
+    color: white;
+    background: #4caf50;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+}
+.btn_line #uptBtn{
+	    width: 90px;
+    height: 40px;
+    text-align: center;
+    border-radius: 10px;
+    color: white;
+    background: #6c757d;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+}
+.btn_line #delBtn{
+	    width: 90px;
+    height: 40px;
+    text-align: center;
+    border-radius: 10px;
+    color: white;
+    background: #dc3545;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+}
+
+
+
+
+
+

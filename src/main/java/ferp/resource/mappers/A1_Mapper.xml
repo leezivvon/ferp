@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+    
+    <mapper namespace="ferp.dao.A1_Dao">
+		
+		<!-- 로그인 -->
+		<select id="storeLogin" parameterType="store" resultType="store">
+			SELECT * 
+			FROM STORE
+			WHERE frRegiNum = #{frRegiNum}
+			AND frPass = #{frPass}
+		</select>
+		
+		<!-- 본사 로그인 -->
+		<select id="empLogin" parameterType="emp" resultType="emp">
+			SELECT * 
+			FROM emp
+			WHERE empnum = #{empnum}
+			AND pass = #{pass}
+		</select>
+		
+		<!-- 로그인한 매장의 직원 목록 불러오기 -->
+		<select id="getStoreClerk" parameterType="storeclerk" resultType="storeclerk">
+			SELECT *
+			FROM STORECLERK
+			WHERE frRegiNum = #{frRegiNum}
+			AND HOURLYPAY != 0
+		</select>
+		
+		<!-- 출근 등록 -->
+		<insert id="addOnDay" parameterType="clerkschedule">
+		INSERT INTO EMPCHECKIN(FrRegiNum,clerkNum,onTime) VALUES (
+			#{FrRegiNum},
+			#{clerkNum},
+			sysdate
+		)
+		</insert>
+		
+		<!-- 퇴근 등록 -->
+		<update id="addOffTime" parameterType="clerkschedule">
+		UPDATE EMPCHECKIN
+			SET OFFTIME = SYSDATE
+		WHERE clerkNum = #{clerkNum}
+		AND TO_CHAR(ONTIME,'YYYY-MM-DD') = TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+		AND FRREGINUM =#{FrRegiNum}
+		</update>
+		
+		<!-- 퇴근 유효성 -->
+		<select id="checkOff" parameterType="clerkschedule" resultType="string">
+		SELECT COUNT(ONTIME)
+		FROM EMPCHECKIN e
+		WHERE CLERKNUM = #{clerkNum}
+		AND TO_CHAR(sysdate, 'YYYYMMDD') = TO_CHAR(ONTIME, 'YYYYMMDD')
+		</select>
+		
+		<!-- 로그인한 매장의 판매 메뉴 불러오기(전체) -->
+		<select id="getMenuList" parameterType="menu" resultType="menu">
+			SELECT m.MENUNUM, MENUNAME, PRICE, INFO, IMG, NECESSARY, CATEGORY
+			FROM MENU m, ONSALE o 
+			WHERE m.MENUNUM = o.MENUNUM
+			AND FrRegiNum = #{FrRegiNum}
+			ORDER BY MENUNAME
+		</select>
+		
+		<!-- 로그인한 매장의 판매 메뉴 불러오기(커피) -->
+		<select id="getMenuListCoffee" parameterType="menu" resultType="menu">
+			SELECT m.MENUNUM, MENUNAME, PRICE, INFO, IMG, NECESSARY, CATEGORY
+			FROM MENU m, ONSALE o 
+			WHERE m.MENUNUM = o.MENUNUM
+			AND FrRegiNum = #{FrRegiNum}
+			AND category = 'coffee'
+			ORDER BY MENUNAME
+		</select>
+		
+		<!-- 로그인한 매장의 판매 메뉴 불러오기(온리아이스) -->
+		<select id="getMenuListSmoothie" parameterType="menu" resultType="menu">
+			SELECT m.MENUNUM, MENUNAME, PRICE, INFO, IMG, NECESSARY, CATEGORY
+			FROM MENU m, ONSALE o 
+			WHERE m.MENUNUM = o.MENUNUM
+			AND FrRegiNum = #{FrRegiNum}
+			AND category = 'onlyIce'
+			ORDER BY MENUNAME
+		</select>
+		
+		<!-- 로그인한 매장의 판매 메뉴 불러오기(기타음료) -->
+		<select id="getMenuListEtc" parameterType="menu" resultType="menu">
+			SELECT m.MENUNUM, MENUNAME, PRICE, INFO, IMG, NECESSARY, CATEGORY
+			FROM MENU m, ONSALE o 
+			WHERE m.MENUNUM = o.MENUNUM
+			AND FrRegiNum = #{FrRegiNum}
+			AND category = 'etc'
+			ORDER BY MENUNAME
+		</select>
+		
+		<!-- 로그인한 매장의 판매 메뉴 불러오기(샌드위치) -->
+		<select id="getMenuListSandwich" parameterType="menu" resultType="menu">
+			SELECT m.MENUNUM, MENUNAME, PRICE, INFO, IMG, NECESSARY, CATEGORY
+			FROM MENU m, ONSALE o 
+			WHERE m.MENUNUM = o.MENUNUM
+			AND FrRegiNum = #{FrRegiNum}
+			AND category = 'sandwich'
+			ORDER BY MENUNAME
+		</select>
+		
+		<!-- 로그인한 매장의 판매 메뉴 불러오기(케이크) -->
+		<select id="getMenuListCake" parameterType="menu" resultType="menu">
+			SELECT m.MENUNUM, MENUNAME, PRICE, INFO, IMG, NECESSARY, CATEGORY
+			FROM MENU m, ONSALE o 
+			WHERE m.MENUNUM = o.MENUNUM
+			AND FrRegiNum = #{FrRegiNum}
+			AND category = 'cake'
+			ORDER BY MENUNAME
+		</select>
+		
+		<!-- 본사 제공 전체 메뉴 가져오기 (페이징!!!!!!!) -->
+		<select id="getAllMenu" parameterType="menu" resultType="menu">
+			SELECT * from(
+			SELECT rownum cnt, a.* FROM 
+			    (SELECT *
+			    FROM MENU 
+			    WHERE MENUNAME LIKE '%'||#{menuName}||'%'
+			    ORDER BY MENUNAME) a
+			    )
+			WHERE cnt BETWEEN #{start} AND #{end}
+		</select>
+		
+		<!-- 주문 현황 -->
+		<select id="getStandByList" parameterType="orders" resultType="orders">
+		SELECT o.*, m.MENUNAME
+		FROM MENU m, ORDERS o 
+		WHERE m.MENUNUM = o.MENUNUM 
+		AND o.STATE = '제조 대기'
+		AND o.FRREGINUM = #{frRegiNum}
+		ORDER BY ordernum
+		</select>
+		
+		<select id="pageAllMenu" parameterType="menu" resultType="int">
+			SELECT COUNT(*)
+			FROM MENU
+			WHERE MENUNAME LIKE '%'||#{menuName}||'%'
+		</select>
+		
+		<!-- 판매할 메뉴 추가 -->
+		<insert id="insOnsale" parameterType="onsale">
+			INSERT INTO ONSALE VALUES(
+				#{menuNum},
+				#{frRegiNum}
+			)
+		</insert>
+		
+		<!-- 판매 메뉴 중복 체크 -->
+		<select id="checkOnsale" resultType="onsale">
+		  SELECT * FROM ONSALE 
+		  WHERE menuNum = #{menuNum} 
+		  AND frRegiNum = #{frRegiNum}
+		</select>
+		
+		<!-- 금일 전체 메뉴 개수 -->
+		<select id="totCnt" resultType="int">
+			SELECT count(*)
+			FROM ORDERS
+			WHERE TO_CHAR(SYSDATE, 'YYYYMMDD') = TO_CHAR(ORDERDATE, 'YYYYMMDD')
+		</select>
+		
+		<!-- 판매할 메뉴 삭제 -->
+		<delete id="delOnsale" parameterType="onsale">
+		DELETE ONSALE 
+		WHERE MENUNUM = #{menuNum}
+		AND FRREGINUM = #{frRegiNum}
+		</delete>
+		
+		<!-- 키오스크에서 orders 테이블로 삽입할 때 -->
+			<insert id="insertOrdersList" parameterType="orders">
+			    INSERT INTO orders(orderNum, orderDate, menuNum, frRegiNum, state, amount, payprice, orderOption)
+			    VALUES (
+					TO_CHAR(sysdate, 'YYMMDD')||#{frRegiNum, jdbcType=VARCHAR, index=1}||1001+#{totCnt},
+					sysdate,
+			        #{menuNum, jdbcType=VARCHAR}, 
+			        #{frRegiNum, jdbcType=VARCHAR, index=1}, 
+			        '결제 대기', 
+			        #{amount, jdbcType=INTEGER}, 
+			        #{payprice, jdbcType=INTEGER}, 
+			        #{orderOption, jdbcType=VARCHAR}
+			    )
+			</insert>
+			
+		<!-- orderNum 가져오기 -->
+		<select id="getMaxOrderNum" parameterType="string" resultType="string">
+			SELECT MAX(ORDERNUM) 
+			FROM ORDERS
+			WHERE FRREGINUM = #{frRegiNum}
+		</select>
+		
+		<!-- 결제 페이지 가격 계산 -->
+		<select id="getPayPrice" parameterType="orders" resultType="orders">
+			SELECT ORDERNUM, ORDERDATE, PAYPRICE, MENUNUM, FRREGINUM, AMOUNT, NVL(ORDEROPTION,'옵션 없음')ORDEROPTION 
+			FROM ORDERS
+			WHERE ORDERNUM = #{orderNum}
+		</select>
+		
+		<!-- 결제 후, 제조 대기로 상태 변경 -->
+		<update id="uptOrderStatePay" parameterType="string">
+		UPDATE ORDERS
+			SET STATE = '제조 대기'
+		WHERE ORDERNUM = #{orderNum}
+		</update>
+		
+		
+
+		
+		<!-- 결제 취소 -->
+		<update id="delOrder" parameterType="string">
+			UPDATE ORDERS
+				SET STATE = '결제취소'
+			WHERE ORDERNUM = #{orderNum}
+		</update>
+		
+		<!-- 결제 취소 시, 전표 삭제 -->
+		<delete id="delPay" parameterType="string">
+			DELETE ACSTATEMENT
+			WHERE remark = #{orderNum}
+		</delete>
+
+		<!-- 예상 대기 -->
+		<select id="getWaitTime" parameterType="string" resultType="int">
+			SELECT count(*)
+			FROM ORDERS
+			WHERE FRREGINUM = #{frRegiNum}
+			AND TO_CHAR(SYSDATE, 'YYYYMMDD') = TO_CHAR(ORDERDATE, 'YYYYMMDD')
+			AND STATE = '제조 대기'
+		</select>
+
+		<!-- 제조 완료 -->
+		<update id="clearOrder" parameterType="string">
+			UPDATE ORDERS
+				SET STATE = '완료'
+			WHERE ORDERNUM = #{orderNum}
+		</update>
+		
+		<!-- 제조 대기 중인 음료 목록 가져오기 -->
+		<select id="loadOrderList" parameterType="string" resultType="orders">
+			SELECT DISTINCT ORDERNUM 
+			FROM ORDERS
+			WHERE FRREGINUM = #{frRegiNum}
+			AND TO_CHAR(ORDERDATE, 'YYMMDD') = TO_CHAR(SYSDATE, 'YYMMDD') 
+			AND STATE = '제조 대기'
+		</select>
+		
+		<!--   제조 완료 음료 목록 최근 5개 가져오기 -->
+		<select id="comOrderList" parameterType="string" resultType="orders">
+			SELECT DISTINCT ORDERNUM 
+			FROM ORDERS
+			WHERE FRREGINUM = '1234567890'
+			AND TO_CHAR(ORDERDATE, 'YYMMDD') = TO_CHAR(SYSDATE, 'YYMMDD')  
+			AND STATE = '완료'
+			ORDER BY ORDERNUM DESC
+		</select>
+    </mapper>

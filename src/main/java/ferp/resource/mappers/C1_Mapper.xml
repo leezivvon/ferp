@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="ferp.dao.C1_Dao">
+
+	<resultMap type="vo.Prod_order_stock_emp_store" id="posesRS">
+		<association property="product" javaType="vo.Product">
+			<result column="productName" property="productName" />
+			<result column="price" property="price" />
+			<result column="remark" property="remark" />
+			<result column="category" property="category" />
+		</association>
+		<association property="prodOrder" javaType="vo.ProdOrder" >
+			<result column="orderNum" property="orderNum"/>
+			<result column="productNum" property="productNum"/>
+			<result column="supplier" property="supplier"/>
+			<result column="demander" property="demander"/>
+			<result column="orderDate" property="orderDate"/>
+			<result column="orderDateMonth" property="orderDateMonth"/>
+			<result column="amount" property="amount"/>
+			<result column="paymentState" property="paymentState"/>
+			<result column="orderState" property="orderState"/>
+		</association>
+		<association property="store" javaType="vo.Store">
+		<result column="frRegiNum" property="frRegiNum"/>
+		<result column="frName" property="frName"/>
+		<result column="frAddress" property="frAddress"/>
+		<result column="frRepName" property="frRepName"/>
+		</association>
+		<association property="emp" javaType="vo.Emp">
+		<result column="empnum" property="empnum"/>
+		<result column="ename" property="ename"/>
+		</association>
+		<association property="stock" javaType="vo.Stock">
+		<result column="remainAmount" property="remainAmount"/>
+		</association>
+	</resultMap>
+
+<resultMap type="vo.Defect_store_product_order" id="dsp">
+	<association property="product" javaType="vo.Product">
+				<result column="productName" property="productName" />
+				<result column="price" property="price" />
+	</association>
+	<association property="store" javaType="vo.Store">
+			<result column="frName" property="frName"/>
+			<result column="empNum" property="empNum"/>
+	</association>
+	<association property="defectOrder" javaType="vo.DefectOrder">
+		<result column="defNum" property="defNum"/>
+		<result column="orderNum" property="orderNum"/>
+		<result column="productNum" property="productNum"/>
+		<result column="orderDate" property="orderDate"/>
+		<result column="applyDate" property="applyDate"/>
+		<result column="img" property="img"/>
+		<result column="state" property="state"/>
+		<result column="methods" property="methods"/>
+		<result column="frRegiNum" property="frRegiNum"/>
+		<result column="type" property="type"/>
+		<result column="completeDate" property="completeDate"/>
+		<result column="type" property="type"/>
+		<result column="type" property="type"/>
+	</association>
+	<association property="prodOrder" javaType="vo.ProdOrder" >
+		<result column="amount" property="amount"/>
+		<result column="paymentState" property="paymentState"/>
+		<result column="orderState" property="orderState"/>
+	</association>
+</resultMap>
+	
+<select id="r9201select" resultMap="posesRS" parameterType="prodOrder">
+SELECT po.*,se.ename,se.empnum,se.frname,stck.remainamount,pd.productName FROM PRODORDER po, product pd, 
+		(SELECT FRREGINUM ,FRNAME,e.empnum,ename FROM store s, emp e WHERE s.EMPNUM =e.EMPNUM) se,
+		(SELECT * FROM STOCK s WHERE STOCKDATE IN (SELECT max(STOCKDATE) FROM stock WHERE FRREGINUM = '9999999999' GROUP BY PRODUCTNUM)) stck
+WHERE po.DEMANDER = se.FRREGINUM AND pd.PRODUCTNUM =po.PRODUCTNUM AND stck.productNum = po.PRODUCTNUM 
+	AND 
+	<if test="orderDate!='' and orderDate!=null">TRUNC(orderdate) = to_date(#{orderDate,jdbcType=VARCHAR},'YYYY-MM-DD')</if> --일별
+	<if test="orderDateMonth!='' and orderDateMonth!=null"> TRUNC(orderdate,'month') = TRUNC(to_date(#{orderDateMonth,jdbcType=VARCHAR},'YYYY-MM'),'month')</if>--월별
+	<if test="orderNum!='' and orderNum!=null">ORDERNUM LIKE '%'||#{orderNum,jdbcType=VARCHAR}||'%'	</if>-- 발주번호
+	AND (po.DEMANDER LIKE '%'||#{demander,jdbcType=VARCHAR}||'%' OR se.frname LIKE '%'||#{demander,jdbcType=VARCHAR}||'%')	-- 주문지점
+	AND (se.ename LIKE '%'||#{supplier,jdbcType=VARCHAR}||'%' OR se.empNum LIKE '%'||#{supplier,jdbcType=VARCHAR}||'%')	-- 담당자
+	AND (pd.PRODUCTNUM LIKE '%'||#{productNum,jdbcType=VARCHAR}||'%' OR pd.PRODUCTNAME LIKE '%'||#{productNum,jdbcType=VARCHAR}||'%') --상품번호 또는 이름
+	AND po.PAYMENTSTATE LIKE '%'||#{paymentState,jdbcType=VARCHAR}||'%' AND po.ORDERSTATE LIKE '%'||#{orderState,jdbcType=VARCHAR}||'%'
+	AND po.DEMANDER !='9999999999'
+ORDER BY po.ORDERDATE asc
+</select>
+
+<select id="r9201select999" resultMap="posesRS" parameterType="prodOrder">
+SELECT po.*,se.ename,se.empnum,se.frname,stck.remainamount,pd.productName FROM PRODORDER po, product pd,
+		(SELECT FRREGINUM ,FRNAME,e.empnum,ename FROM store s, emp e WHERE s.EMPNUM =e.EMPNUM) se,
+		(SELECT * FROM STOCK s WHERE STOCKDATE IN (SELECT max(STOCKDATE) FROM stock GROUP BY PRODUCTNUM)) stck
+WHERE po.DEMANDER = se.FRREGINUM AND pd.PRODUCTNUM =po.PRODUCTNUM AND stck.productNum = po.PRODUCTNUM 
+	AND 
+	<if test="orderDate!='' and orderDate!=null">TRUNC(orderdate) = to_date(#{orderDate,jdbcType=VARCHAR},'YYYY-MM-DD')</if> --일별
+	<if test="orderDateMonth!='' and orderDateMonth!=null"> TRUNC(orderdate,'month') = TRUNC(to_date(#{orderDateMonth,jdbcType=VARCHAR},'YYYY-MM'),'month')</if>--월별
+	<if test="orderNum!='' and orderNum!=null">ORDERNUM LIKE '%'||#{orderNum,jdbcType=VARCHAR}||'%'	</if>-- 발주번호
+	AND (po.DEMANDER ='9999999999')	-- 주문지점
+	AND (pd.PRODUCTNUM LIKE '%'||#{productNum,jdbcType=VARCHAR}||'%' OR pd.PRODUCTNAME LIKE '%'||#{productNum,jdbcType=VARCHAR}||'%') --상품번호 또는 이름
+	AND po.PAYMENTSTATE LIKE '%'||#{paymentState,jdbcType=VARCHAR}||'%' AND po.ORDERSTATE LIKE '%'||#{orderState,jdbcType=VARCHAR}||'%'
+ORDER BY po.ORDERDATE asc
+</select>
+
+<update id="r9203updateOrderState" parameterType="prodOrder">
+UPDATE PRODORDER SET ORDERSTATE = #{orderStateUpdate} WHERE (ORDERNUM,PRODUCTNUM) IN
+(
+SELECT po.ORDERNUM,po.PRODUCTNUM FROM PRODORDER po, product pd, 
+		(SELECT FRREGINUM ,FRNAME,e.empnum,ename FROM store s, emp e WHERE s.EMPNUM =e.EMPNUM) se,
+		(SELECT * FROM STOCK s WHERE STOCKDATE IN (SELECT max(STOCKDATE) FROM stock GROUP BY PRODUCTNUM)) stck
+	WHERE po.DEMANDER = se.FRREGINUM AND pd.PRODUCTNUM =po.PRODUCTNUM AND stck.productNum = po.PRODUCTNUM 
+	AND 
+	TRUNC(orderdate) = to_date(#{orderDate,jdbcType=VARCHAR},'YYYY-MM-DD')
+	AND (po.DEMANDER LIKE '%'||#{demander,jdbcType=VARCHAR}||'%' OR se.frname LIKE '%'||#{demander,jdbcType=VARCHAR}||'%')
+	AND (se.ename LIKE '%'||#{supplier,jdbcType=VARCHAR}||'%' OR se.empNum LIKE '%'||#{supplier,jdbcType=VARCHAR}||'%')
+	AND (pd.PRODUCTNUM LIKE '%'||#{productNum,jdbcType=VARCHAR}||'%' OR pd.PRODUCTNAME LIKE '%'||#{productNum,jdbcType=VARCHAR}||'%')
+	AND po.PAYMENTSTATE LIKE '%'||#{paymentState,jdbcType=VARCHAR}||'%' AND po.ORDERSTATE LIKE '%'||#{orderState,jdbcType=VARCHAR}||'%'
+)
+</update>
+
+<select id='r9203forTotalStock' parameterType="prodOrder" resultType="prodOrder">
+SELECT po.PRODUCTNUM , sum(po.AMOUNT) AS AMOUNT
+FROM PRODORDER po, product pd, 
+		(SELECT FRREGINUM ,FRNAME,e.empnum,ename FROM store s, emp e WHERE s.EMPNUM =e.EMPNUM) se
+WHERE po.DEMANDER = se.FRREGINUM AND pd.PRODUCTNUM =po.PRODUCTNUM
+	AND TRUNC(orderdate) = to_date('2023-03-21','YYYY-MM-DD') --일별일때만 일괄 가능
+	AND (po.DEMANDER LIKE '%'||#{demander,jdbcType=VARCHAR}||'%' OR se.frname LIKE '%'||#{demander,jdbcType=VARCHAR}||'%')	-- 주문지점
+	AND (se.ename LIKE '%'||#{supplier,jdbcType=VARCHAR}||'%' OR se.empNum LIKE '%'||#{supplier,jdbcType=VARCHAR}||'%')	-- 담당자
+	AND (pd.PRODUCTNUM LIKE '%'||#{productNum,jdbcType=VARCHAR}||'%' OR pd.PRODUCTNAME LIKE '%'||#{productNum,jdbcType=VARCHAR}||'%') --상품번호 또는 이름
+	AND po.PAYMENTSTATE LIKE '%'||#{paymentState,jdbcType=VARCHAR}||'%' AND po.ORDERSTATE LIKE '%'||#{orderState,jdbcType=VARCHAR}||'%'
+	AND po.DEMANDER !='9999999999'
+GROUP BY  po.PRODUCTNUM
+</select>
+
+<select id="r9310selectProdOrderPayState" resultMap="posesRS" parameterType="prodOrder">
+SELECT to_char(TRUNC(ORDERDATE,'month'),'YYYY-MM') AS orderDateMonth,FRREGINUM,FRNAME, 
+	sum(AMOUNT*price) AS price,sum(CASE WHEN CATEGORY LIKE '면세'||'%' THEN 0 ELSE AMOUNT * price * 0.1 END ) AS remark,
+	ename,empnum, po.PAYMENTSTATE
+FROM prodOrder po,PRODUCT pd, (SELECT FRREGINUM ,FRNAME,e.empnum,ename FROM store s, emp e WHERE s.EMPNUM =e.EMPNUM) se
+WHERE po.DEMANDER = se.FRREGINUM AND pd.PRODUCTNUM =po.PRODUCTNUM
+	AND TRUNC(orderdate,'month') BETWEEN to_date(#{orderDateMonth,jdbcType=VARCHAR}, 'YYYY-MM') AND to_date(#{orderDate,jdbcType=VARCHAR}, 'YYYY-MM')
+	AND (po.DEMANDER LIKE '%'||#{demander,jdbcType=VARCHAR}||'%' OR se.frname LIKE '%'||#{demander,jdbcType=VARCHAR}||'%')
+	AND (se.ename LIKE '%'||#{supplier,jdbcType=VARCHAR}||'%' OR se.empNum LIKE '%'||#{supplier,jdbcType=VARCHAR}||'%')	
+	AND po.PAYMENTSTATE LIKE '%'||#{paymentState,jdbcType=VARCHAR}||'%'
+	AND po.orderState !='발주취소'
+	And po.DEMANDER != '9999999999'
+GROUP BY TRUNC(ORDERDATE,'month'),FRREGINUM,FRNAME,ename,empnum,po.PAYMENTSTATE
+</select>
+
+<update id="r9311updateProdOrderPayState" parameterType="prodOrder">
+	UPDATE PRODORDER SET PAYMENTSTATE = #{paymentState} 
+	WHERE trunc(ORDERDATE,'month') = to_date(#{orderDateMonth},'yyyy-mm') 
+		<if test="orderStateUpdate!= 1 ">
+		AND demander = #{demander}	--일괄업뎃 아닐때
+		</if>
+		<if test="orderStateUpdate == 1">
+		<if test="paymentState=='청구'">
+		AND PAYMENTSTATE = '정산전'
+		</if>
+		<if test="paymentState=='계산서 발행'">
+		AND PAYMENTSTATE = '청구'
+		</if>
+		</if>
+</update>
+
+<select id="r9301prodOrderPayDetail" resultMap="posesRS" parameterType="prodOrder">
+SELECT pd.productnum,pd.category,pd.PRODUCTNAME ,pd.PRICE,(CASE WHEN CATEGORY LIKE '면세'||'%' THEN 0 ELSE price * 0.1 END) AS remark,
+to_char(monthly,'yyyy-mm') AS orderDateMonth,po.frreginum,po.AMOUNT,po.PAYMENTSTATE,s.frname,s.FRREPNAME ,s.FRADDRESS 
+	FROM PRODUCT pd,
+		store s,
+		(SELECT TRUNC(ORDERDATE,'month') AS monthly,po.DEMANDER AS frreginum, po.productnum,sum(amount) AS amount,PAYMENTSTATE
+		FROM PRODORDER po 
+		WHERE po.DEMANDER =#{demander} AND TRUNC(ORDERDATE,'month')=TO_DATE(#{orderDateMonth},'YYYY-MM')
+		GROUP BY TRUNC(ORDERDATE,'month'), po.productnum,po.DEMANDER,PAYMENTSTATE) po
+WHERE pd.PRODUCTNUM =po.productnum AND s.FRREGINUM =po.frreginum
+ORDER BY CATEGORY 
+</select>
+
+
+<select id="r7100SelectAccount" resultType="account" parameterType="account">
+	SELECT * FROM Account 
+	where acntNum Like '%'||#{acntNum,jdbcType=VARCHAR}||'%' 
+	And acntTitle LIKE '%'||#{acntTitle,jdbcType=VARCHAR}||'%'
+	And acntGroup LIKE '%'||#{acntGroup,jdbcType=VARCHAR}||'%'
+	and acntUsing = #{acntUsing}
+</select>
+	
+	<update id="r7102updateAccountUsing" parameterType="account">
+	update account set acntUsing =#{acntUsing} where acntNum =#{acntNum}
+	</update>
+
+	<insert id="r7101insertAccount" parameterType="account">
+		INSERT INTO ACCOUNT
+		values(#{acntNum},#{acntGroup},#{acntTitle},#{acntUsing})
+	</insert>
+
+	<insert id="r7210insertStatement" parameterType="acstmt">
+		INSERT INTO ACSTATEMENT VALUES(
+		#{statementNum}||(SELECT nvl(substr(MAX(statementNum),3,5),1000)<if test="lineNum==0">+1</if> 
+		FROM ACSTATEMENT a WHERE FRREGINUM =#{frRegiNum} AND STMTDATE = TO_DATE(#{stmtDate},'YYYY-MM-DD')),
+		#{frRegiNum},#{lineNum},TO_DATE(#{stmtDate},'YYYY-MM-DD'),
+		#{acntNum},#{debit},#{credit},#{stmtOpposite,jdbcType=VARCHAR},#{remark,jdbcType=VARCHAR})
+	</insert>
+
+	<select id="r7211selectACStatement" parameterType="acstmt" resultType="acstmt">
+	SELECT a.* ,CASE WHEN ii2.maxrn=ii.rronum THEN (ii.rronum*-1) ELSE ii.rronum END as rronum
+	FROM ACSTATEMENT a ,
+		(SELECT rownum AS rronum, a.statementNum FROM ACSTATEMENT a 
+			WHERE TO_CHAR(stmtdate,'YYYY-MM-DD') =#{stmtDate} AND FRREGINUM =#{frRegiNum} AND LINENUM =1 ORDER BY STATEMENTNUM	) ii,
+		(SELECT max(rn) AS maxrn from(SELECT rownum AS rn, STATEMENTNUM FROM ACSTATEMENT 
+			WHERE TO_CHAR(stmtdate,'YYYY-MM-DD') =#{stmtDate} AND FRREGINUM =#{frRegiNum} AND LINENUM =1 ORDER BY STATEMENTNUM) )ii2
+		WHERE ii.statementNum=a.STATEMENTNUM 
+		AND TO_CHAR(a.stmtdate,'YYYY-MM-DD') =#{stmtDate}
+		AND a.FRREGINUM =#{frRegiNum}
+		AND a.STATEMENTNUM =
+	<if test="statementNum==null or statementNum==''">
+		(SELECT max(STATEMENTNUM) FROM ACSTATEMENT a2 
+		WHERE FRREGINUM=#{frRegiNum} AND TO_CHAR(stmtdate,'YYYY-MM-DD') =#{stmtDate})
+	</if>
+	<if test="statementNum!=null and statementNum!=''">#{statementNum}</if>
+	
+	</select>
+	
+	
+	<select id="r7211selectPrevNext" parameterType="acstmt" resultType="acstmt">
+	SELECT a2.*,CASE WHEN ii2.maxrn=ii.rronum THEN (ii.rronum*-1) ELSE ii.rronum END as rronum FROM ACSTATEMENT a2, (
+	SELECT rownum AS rronum, a.* 
+	FROM ACSTATEMENT a 
+	WHERE TO_CHAR(stmtdate,'YYYY-MM-DD') =#{stmtDate} AND FRREGINUM =#{frRegiNum} AND LINENUM =1 ORDER BY STATEMENTNUM) ii ,
+	(SELECT max(rn) AS maxrn from(SELECT rownum AS rn, STATEMENTNUM FROM ACSTATEMENT WHERE TO_CHAR(stmtdate,'YYYY-MM-DD') =#{stmtDate} AND FRREGINUM =#{frRegiNum} AND LINENUM =1 ORDER BY STATEMENTNUM) )ii2
+	WHERE a2.STATEMENTNUM =ii.statementNum 
+	AND rronum= #{rronum}
+	AND TO_CHAR(a2.stmtdate,'YYYY-MM-DD') = #{stmtDate} AND a2.FRREGINUM =#{frRegiNum}
+	</select>
+	
+	
+	
+	
+	
+<update id="r7212updateACStatement" parameterType="acstmt">
+MERGE INTO ACSTATEMENT t
+USING ( SELECT #{statementNum} AS STATEMENTNUM, #{frRegiNum} AS FRREGINUM, TO_DATE(#{stmtDate}, 'YYYY-MM-DD') AS STMTDATE,
+		#{lineNum} AS LINENUM, #{acntNum} AS ACNTNUM, #{debit} AS DEBIT, #{credit} AS CREDIT, 
+		#{stmtOpposite,jdbcType=VARCHAR} AS STMTOPPOSITE, #{remark,jdbcType=VARCHAR} AS REMARK FROM dual ) s
+ON (t.STATEMENTNUM = s.STATEMENTNUM AND t.FRREGINUM = s.FRREGINUM AND t.STMTDATE = s.STMTDATE AND t.LINENUM = s.LINENUM)
+WHEN MATCHED THEN UPDATE SET t.ACNTNUM = s.ACNTNUM, t.DEBIT = s.DEBIT, t.CREDIT = s.CREDIT, t.STMTOPPOSITE = s.STMTOPPOSITE, t.REMARK = s.REMARK 
+WHEN NOT MATCHED THEN
+  INSERT (STATEMENTNUM, FRREGINUM, LINENUM, STMTDATE, ACNTNUM, DEBIT, CREDIT, STMTOPPOSITE, REMARK)
+  VALUES (s.STATEMENTNUM, s.FRREGINUM, s.LINENUM, s.STMTDATE, s.ACNTNUM, s.DEBIT, s.CREDIT, s.STMTOPPOSITE, s.REMARK)
+	</update>
+	
+	<delete id="r7213deleteACStatement" parameterType="acstmt">
+	DELETE FROM ACSTATEMENT WHERE STATEMENTNUM =#{statementNum} AND TO_CHAR(stmtdate,'YYYY-MM-DD') = #{stmtDate} AND FRREGINUM =#{frRegiNum}
+	</delete>
+	
+	
+<select id="r7204selectStatementList" parameterType="acstmt" resultType="acstmt">
+SELECT e2.* FROM (
+SELECT rownum AS rronum, e.* from
+( SELECT STATEMENTNUM,a.ACNTTITLE "ACNTNUM",
+		CASE WHEN acntgroup='비용' THEN debit-credit 
+		WHEN acntgroup='자산' THEN debit-credit
+		ELSE CREDIT - debit END AS DEBIT,
+	STMTOPPOSITE,TO_CHAR(STMTDATE,'YYYY-MM-DD') "STMTDATE", REMARK 
+	FROM ACSTATEMENT s , ACCOUNT a
+	WHERE s.ACNTNUM = a.ACNTNUM 
+	AND s.ACNTNUM LIKE '%'||#{acntNum,jdbcType=VARCHAR}||'%'
+	AND (<if test="stmtOpposite=='' or stmtOpposite==null">STMTOPPOSITE IS NULL OR</if> 
+	STMTOPPOSITE LIKE '%'||#{stmtOpposite,jdbcType=VARCHAR}||'%')
+	AND STMTDATE BETWEEN TO_DATE(#{stmtDate},'YYYY-MM-DD') AND TO_DATE(#{stmtDate2},'YYYY-MM-DD')
+	AND FRREGINUM = #{frRegiNum} ORDER BY STMTDATE) e ) e2
+WHERE rronum BETWEEN 20*(#{rronum}-1)+1 AND 20*#{rronum}
+</select>
+<select id="r7204getTotalPages" parameterType="acstmt" resultType="Integer">
+SELECT CEIL(COUNT(e.STATEMENTNUM)/20) FROM (
+SELECT STATEMENTNUM
+	FROM ACSTATEMENT s , ACCOUNT a
+	WHERE s.ACNTNUM = a.ACNTNUM 
+	AND s.ACNTNUM LIKE '%'||#{acntNum,jdbcType=VARCHAR}||'%'
+	AND (<if test="stmtOpposite=='' or stmtOpposite==null">STMTOPPOSITE IS NULL OR</if> 
+	STMTOPPOSITE LIKE '%'||#{stmtOpposite,jdbcType=VARCHAR}||'%')
+	AND STMTDATE BETWEEN TO_DATE(#{stmtDate},'YYYY-MM-DD') AND TO_DATE(#{stmtDate2},'YYYY-MM-DD')
+	AND FRREGINUM = #{frRegiNum}
+) e
+</select>
+	
+<select id="r7204selectStatementListByDate" parameterType="acstmt" resultType="acstmt">
+SELECT e2.* FROM (
+SELECT rownum AS rronum, e.* from
+( SELECT TO_CHAR(STMTDATE,'YYYY-MM-DD') as "STMTDATE",a.ACNTTITLE "ACNTNUM",
+		sum(CASE WHEN acntgroup='비용' THEN debit-credit 
+		WHEN acntgroup='자산' THEN debit-credit
+		ELSE CREDIT - debit END) AS DEBIT
+	FROM ACSTATEMENT s , ACCOUNT a
+	WHERE s.ACNTNUM = a.ACNTNUM 
+	AND s.ACNTNUM LIKE '%'||#{acntNum,jdbcType=VARCHAR}||'%'
+	AND (<if test="stmtOpposite=='' or stmtOpposite==null">STMTOPPOSITE IS NULL OR</if> 
+	STMTOPPOSITE LIKE '%'||#{stmtOpposite,jdbcType=VARCHAR}||'%')
+	AND STMTDATE BETWEEN TO_DATE(#{stmtDate},'YYYY-MM-DD') AND TO_DATE(#{stmtDate2},'YYYY-MM-DD')
+	AND FRREGINUM = #{frRegiNum}
+	GROUP BY STMTDATE,a.ACNTTITLE
+ORDER BY STMTDATE ) e ) e2
+WHERE rronum BETWEEN 20*(#{rronum}-1)+1 AND 20*#{rronum}
+</select>
+	
+<select id="r7204getTotalPagesByDate" parameterType="acstmt" resultType="Integer">
+SELECT CEIL(COUNT(e.stmtdate)/20) FROM (
+	SELECT STMTDATE FROM ACSTATEMENT s , ACCOUNT a
+	WHERE s.ACNTNUM = a.ACNTNUM 
+	AND s.ACNTNUM LIKE '%'||#{acntNum,jdbcType=VARCHAR}||'%'
+	AND (<if test="stmtOpposite=='' or stmtOpposite==null">STMTOPPOSITE IS NULL OR</if> 
+	STMTOPPOSITE LIKE '%'||#{stmtOpposite,jdbcType=VARCHAR}||'%')
+	AND STMTDATE BETWEEN TO_DATE(#{stmtDate},'YYYY-MM-DD') AND TO_DATE(#{stmtDate2},'YYYY-MM-DD')
+	AND FRREGINUM = #{frRegiNum}
+	GROUP BY STMTDATE,a.ACNTTITLE) e
+</select>
+
+<select id="r9402selectDefectOrder" resultMap="dsp" parameterType="defectorder">
+SELECT d.*,p.PRODUCTNAME, p.PRICE ,s.EMPNUM ,s.FRNAME,po.AMOUNT ,po.PAYMENTSTATE ,po.ORDERSTATE
+FROM DEFECTORDER d, store s,PRODUCT p,PRODORDER po 
+WHERE d.FRREGINUM =s.FRREGINUM AND p.PRODUCTNUM =d.PRODUCTNUM AND po.ORDERNUM =d.ORDERNUM AND po.PRODUCTNUM =d.PRODUCTNUM 
+	AND (APPLYDATE BETWEEN TO_DATE(#{applyDate},'YYYY-MM-DD') AND TO_DATE(#{orderDateMonth},'YYYY-MM-DD') )
+	AND DEFNUM LIKE '%'||#{defNum,jdbcType=VARCHAR}||'%'
+	AND d.frRegiNum LIKE '%'||#{frRegiNum,jdbcType=VARCHAR}||'%'
+	AND empnum LIKE '%'||#{category,jdbcType=VARCHAR}||'%'
+	AND methods LIKE '%'||#{methods,jdbcType=VARCHAR}||'%'
+	AND state LIKE '%'||#{state,jdbcType=VARCHAR}||'%'
+</select>
+
+<update id="r9403updateDefectOrder" parameterType="defectorder">
+UPDATE DEFECTORDER 
+SET state = #{state}
+<if test="state =='완료' ">, completeDate = sysdate</if>
+WHERE defnum=#{defNum}
+</update>
+
+<update id="r9403updateProdOrder" parameterType="prodOrder">
+UPDATE PRODORDER SET AMOUNT =#{amount} , ORDERSTATE = #{orderState}
+WHERE ORDERNUM = #{orderNum} AND PRODUCTNUM = #{productNum} and orderDate=to_date(#{orderDate},'YYYY-MM-DD HH24:MI:SS')
+</update>
+	
+	<select id="selectActiveStore" resultType="store">
+	select * from store where frPass IS NOT NULL 
+	</select>
+	
+	<select id="selectActiveEmp" resultType="emp">
+	SELECT DISTINCT e.empnum, ename FROM emp e, store s WHERE e.EMPNUM =s.EMPNUM 
+	</select>
+	
+	<select id="selectProduct" resultType="product">
+	select productNum, productName from product
+	</select>
+	
+	<select id="r1003tempPassword" resultType="store" parameterType="store">
+	select * from store where frRegiNum = #{frRegiNum} and frRepName=#{frRepName} and email=#{email}
+	</select>
+	
+	<update id="r1003updatePassword" parameterType="store">
+	update store set frPass =#{frPass} where frRegiNum = #{frRegiNum} and frRepName=#{frRepName}
+	</update>
+</mapper>

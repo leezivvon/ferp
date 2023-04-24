@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="ferp.dao.B1_Dao">
+
+	<!-- 매장정보 -->
+	<!-- 본사:지난달전체매장매출총액 -->
+	<select id="lastmonthAllSales" resultType="int">
+		SELECT nvl(sum(payprice),0) allfrsales
+		FROM orders
+		WHERE state='완료'
+		AND to_char(orderdate, 'YYYY/MM')=to_char(add_months(SYSDATE, -1),'YYYY/MM')
+	</select>
+	<!-- 본사:전체매장매출총액 그래프 -->
+	<select id="allSalesGraph" parameterType="orders" resultType="orders">
+		SELECT to_char(orderdate, 'YYYY-MM') orderdate, nvl(sum(payprice),0) allfrsales 
+		FROM orders
+		WHERE state='완료'
+		AND trunc(orderdate,'month') BETWEEN to_date(#{frSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM') AND to_date(#{toSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM') 
+		GROUP BY to_char(orderdate, 'YYYY-MM')
+		ORDER BY orderdate
+	</select>
+	
+	<!-- 본사:매장별매출 전체조회 -->
+	<select id="salesByStoreList" parameterType="orders" resultType="orders">
+		SELECT frname, s.frreginum, frtel, frRepname, ename, nvl(frsalesum, 0) frsales, nvl(mtotal, 0) frpurchase
+		FROM store s, emp e, 
+			( SELECT frreginum, sum(payprice) frsalesum
+			  FROM orders
+			  WHERE state='완료'
+			  AND TRUNC(orderdate,'month') BETWEEN to_date(#{frSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM') AND to_date(#{toSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM')
+			  GROUP BY frreginum ) ord,
+			( SELECT DEMANDER, sum(mcnt*price) mtotal
+			  FROM PRODUCT prd, (SELECT DEMANDER, PRODUCTNUM,  sum(amount) mcnt
+								FROM PRODORDER d
+							  	WHERE PAYMENTSTATE='완료'
+								AND TRUNC(orderdate,'month') BETWEEN to_date(#{frSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM') AND to_date(#{toSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM')
+								GROUP BY PRODUCTNUM, DEMANDER) prdord 
+			  WHERE prd.PRODUCTNUM=prdord.PRODUCTNUM
+			  GROUP BY DEMANDER) fprdord   
+		WHERE ord.frreginum(+)=s.frreginum AND s.empnum=e.empnum AND s.frreginum=fprdord.DEMANDER(+)
+		and s.FRREGINUM!='9999999999'
+		<if test="frname!=null and !frname.equals('')">
+		AND frname LIKE '%'||#{frname}||'%'
+		</if>
+		<if test="frRepname!=null and !frRepname.equals('')">
+		AND frRepname LIKE '%'||#{frRepname}||'%'
+		</if>
+		<if test="ename!=null and !ename.equals('')">
+		AND ename LIKE '%'||#{ename}||'%'
+		</if>
+		ORDER BY DECODE(frpass, NULL, 2, 1), frname
+	</select>
+	
+	<!-- 본사:매장정보상세조회 -->
+	<select id="storeDetailInfo" parameterType="String" resultType="orders">
+		SELECT frname, s.frreginum, TO_char(FROPEN,'YYYY.MM.DD') AS fropen, fraddress, frtel, frrepname, ename
+		FROM store s, emp e
+		WHERE s.empnum=e.empnum
+		AND frRegiNum=#{frRegiNum}
+	</select>
+	
+	<!-- 본사:매장정보상세조회-매매액 -->
+	<select id="detailSalesList" parameterType="orders" resultType="orders">		
+		SELECT o.orderdate, nvl(frsales,0) frsales, nvl(frpurchase,0) frpurchase,  ( nvl(frsales,0)-nvl(frpurchase,0) ) profit
+		FROM (  SELECT orderdate, nvl(sum(mcnt*price),0) frpurchase
+				FROM PRODUCT p ,(SELECT to_char(orderdate, 'YYYY.MM') orderdate, PRODUCTNUM, nvl(sum(amount),0) mcnt
+								FROM PRODORDER
+								WHERE DEMANDER=#{frRegiNum, jdbcType=VARCHAR, index=1}
+								AND PAYMENTSTATE='완료'
+								GROUP BY PRODUCTNUM, to_char(orderdate, 'YYYY.MM'))po
+				WHERE p.PRODUCTNUM=po.productnum
+				GROUP BY orderdate ) po,
+			(	SELECT to_char(orderdate,'YYYY.MM') orderdate, nvl(sum(payprice),0) frsales
+				FROM ORDERS o
+				where state='완료'
+				AND frreginum=#{frRegiNum, jdbcType=VARCHAR, index=1}
+				GROUP BY to_char(orderdate,'YYYY.MM'))o
+		WHERE po.orderdate(+)=o.orderdate
+		AND to_date(o.orderdate,'YYYY-MM') BETWEEN to_date(#{frSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM') AND to_date(#{toSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM')
+		ORDER BY o.orderdate desc
+	</select>
+	
+	<!-- 본사:매장정보상세조회-메뉴 -->
+	<select id="detailMenuList" parameterType="orders" resultType="orders">			
+		SELECT MENUNAME, price, nvl(mcnt,0) mcnt,  nvl(price*mcnt,0) msales 
+		FROM menu m, (SELECT menunum, sum(amount) mcnt
+					FROM orders
+					WHERE FRREGINUM=#{frRegiNum, jdbcType=VARCHAR, index=1}
+					AND state='완료'
+					AND TRUNC(orderdate,'month') BETWEEN to_date(#{frSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM') AND to_date(#{toSchOrderdt,jdbcType=VARCHAR}, 'YYYY-MM')
+					group BY menunum) o,
+					(SELECT menunum
+					FROM ONSALE
+					WHERE FRREGINUM=#{frRegiNum, jdbcType=VARCHAR, index=1}) os
+		WHERE m.menunum=o.menunum(+) AND os.menunum=m.menunum
+		ORDER BY mcnt desc, msales desc
+	</select>
+	
+	
+	
+	<!-- 매장QA -->
+	<!-- 본사:품질관리점검표 출력 --> <!-- 페이지처리 -->
+	<select id="qaList" parameterType="qachecklist" resultType="qachecklist">
+		select *
+		from (
+			SELECT ROWNUM CNT,qanum, qaitem, usable
+			FROM QACHECKLIST
+			)
+		where cnt between #{start} and #{end}
+	</select>
+
+	<!-- 페이지처리 -->		
+	<select id="totNum" resultType="int">
+		SELECT COUNT(*)
+		FROM QACHECKLIST
+	</select>
+	
+	<!-- 본사:품질관리점검표 추가등록 -->
+	<insert id="qaListIns" parameterType="string">
+		INSERT INTO QACHECKLIST 
+		VALUES(qanum_seq.nextval||'', #{qaItem}, 'A')
+	</insert>
+	
+	<!-- 본사:품질관리점검표 비/활성화 -->
+	<update id="qaListUpt" parameterType="qachecklist">
+		UPDATE QACHECKLIST SET USABLE=#{usable} WHERE qanum=#{qaNum, jdbcType=VARCHAR}
+	</update>
+	
+	
+	<!-- 본사:이달qa 전매장 조회 -->
+	<select id="qaStoresList" parameterType="qa" resultType="qa">
+		SELECT s.frreginum, frname, frRepName, ename, frtel, to_char(inspectdte, 'YYYY-MM-DD') inspectdte, to_char(regdte, 'YYYY-MM-DD') regdte
+		FROM store s, emp e, (  SELECT FRREGINUM, max(inspectdte) inspectdte, max(regdte) regdte
+								FROM QA 
+								WHERE trunc(inspectdte, 'MONTH') = trunc(SYSDATE, 'MONTH')  
+								GROUP BY FRREGINUM) q
+		WHERE s.empnum=e.EMPNUM AND s.FRREGINUM=q.frreginum(+)
+		AND s.frreginum!='9999999999'
+		AND frpass IS NOT NULL
+		<if test="frname!=null and !frname.equals('')">
+		AND frname LIKE '%'||#{frname, jdbcType=VARCHAR}||'%'
+		</if>
+		<if test="frRepName!=null and !frRepName.equals('')">
+		AND frRepName LIKE '%'||#{frRepName, jdbcType=VARCHAR}||'%'
+		</if>
+		<if test="ename!=null and !ename.equals('')">
+		AND ename LIKE '%'||#{ename, jdbcType=VARCHAR}||'%'
+		</if>
+		ORDER BY inspectdte, frname
+	</select>
+	
+	<!-- 본사:이달qa 특정매장 상세조회 -->
+	<!-- 매장정보 -->
+	<select id="qaDetailStrinfo" parameterType="string" resultType="qa">
+		SELECT DISTINCT q.frreginum, frname, frtel, to_char(inspectdte, 'YYYY-MM-DD') inspectdte, to_char(regdte, 'YYYY-MM-DD') regdte, frrepname, ename
+		FROM store s, emp e, QA q
+		WHERE e.empnum=q.empnum and s.empnum=e.EMPNUM AND s.FRREGINUM=q.frreginum 
+		AND q.frreginum=#{frRegiNum, jdbcType=VARCHAR}
+		AND trunc(inspectdte, 'MONTH') = trunc(SYSDATE, 'MONTH')
+	
+	</select>	
+	<!-- qa결과표 -->
+	<select id="qaDetailList" parameterType="qa" resultType="qa">
+		SELECT qaitem, results, nvl(comments,' ') comments
+		FROM QA q, QACHECKLIST qck
+		WHERE q.qanum=qck.qanum
+		AND frRegiNum=#{frRegiNum, jdbcType=VARCHAR}
+		AND trunc(inspectdte, 'MONTH') = trunc(SYSDATE, 'MONTH')
+	</select>	
+	<!-- qa결과점수 --> 
+	<select id="qaDetailScore" parameterType="qa" resultType="qa">
+		SELECT qncnt, ycnt
+		FROM (  SELECT count(qanum) qncnt
+				from qa
+				WHERE FRREGINUM =#{frRegiNum, jdbcType=VARCHAR, index=1}
+				AND to_Char(INSPECTDTE, 'YYYYMMDD')=#{inspectDte, jdbcType=VARCHAR, index=2}) qc,
+			 (  SELECT count(results) ycnt
+				FROM qa
+				WHERE FRREGINUM=#{frRegiNum, jdbcType=VARCHAR, index=1}
+				AND to_Char(INSPECTDTE, 'YYYYMMDD')=#{inspectDte, jdbcType=VARCHAR, index=2}
+				AND results='Y' ) qy
+	</select>
+	
+	
+	
+	<!-- 담당 매장 점검 -->
+	<!-- 담당매장 목록 -->
+	<select id="inchargeStore" parameterType="string" resultType="store">
+		SELECT frreginum, frname
+		FROM STORE
+		WHERE empnum=#{empNum, jdbcType=VARCHAR}
+	</select>
+	
+	<!-- 담당매장 중 특정매장 점검목록 -->
+	<select id="inchargeStrQA" parameterType="qa" resultType="qa">
+		SELECT q.INSPECTIONNUM, to_Char(q.INSPECTDTE, 'YYYY.MM.DD') INSPECTDTE,  nvl(to_Char(q.REGDTE, 'YYYY.MM.DD'),'-') REGDTE, qncnt, ycnt
+		FROM (	SELECT INSPECTIONNUM, inspectdte, REGDTE, count(qanum) qncnt
+				from qa
+				WHERE FRREGINUM =#{frRegiNum, jdbcType=VARCHAR, index=1}
+				GROUP BY INSPECTDTE , REGDTE, INSPECTIONNUM ) q ,
+			(	SELECT INSPECTIONNUM, inspectdte, count(results) ycnt
+				FROM qa
+				WHERE FRREGINUM =#{frRegiNum, jdbcType=VARCHAR, index=1}
+				AND results='Y'
+				GROUP BY INSPECTDTE, INSPECTIONNUM) cy
+		WHERE q.inspectdte=cy.inspectdte(+)
+		AND q.INSPECTIONNUM=cy.INSPECTIONNUM(+)
+		ORDER BY q.INSPECTDTE desc
+	</select>
+	
+	<!-- 특정매장 과거점검결과 -->
+	<select id="inchargeStrPastQA" parameterType="qa" resultType="qa">
+		SELECT q.qanum, qaitem, RESULTS, nvl(COMMENTS,' ') COMMENTS, to_Char(INSPECTDTE, 'YYYY.MM.DD') INSPECTDTE
+		FROM QA q, QACHECKLIST qcl 
+		WHERE q.qanum=qcl.QANUM
+		AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR}
+		AND INSPECTIONNUM=#{inspectionNum, jdbcType=VARCHAR} 
+		ORDER BY qanum
+	</select>
+	
+	<!-- 특정매장 점검등록 -->
+	<!-- 점검항목 --> 
+	<select id="inspectQAclmn" parameterType="qa" resultType="qa">
+		SELECT q.qanum, qaitem, results, comments
+		FROM QA q, QACHECKLIST qcl
+		WHERE q.qanum=qcl.QANUM
+		AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR}
+		AND trunc(inspectdte,'month') =trunc(sysdate, 'month')
+		ORDER BY qanum
+	</select>
+	<!-- 체크하면 y로 변경, comments변경 -->
+	<update id="updateQA" parameterType="qa">
+		UPDATE QA
+		SET RESULTS=#{results, jdbcType=VARCHAR}, comments=#{comments, jdbcType=VARCHAR}
+		WHERE qanum=#{qaNum, jdbcType=VARCHAR}
+		AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR}
+		AND trunc(inspectdte,'month')=trunc(sysdate, 'month')
+	</update>
+	
+	<!-- 등록일 -->
+	<update id="updateQAregdte" parameterType="qa">
+		UPDATE QA q SET regdte = trunc(sysdate)
+		WHERE q.qanum IN (
+		  SELECT q.qanum
+		  FROM QACHECKLIST qcl, qa q
+		  WHERE q.qanum=qcl.QANUM
+		  AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR, index=1}
+		  AND trunc(inspectdte,'month') = trunc(sysdate, 'month')
+		)
+		AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR, index=1}
+		AND trunc(inspectdte,'month') = trunc(sysdate, 'month')
+	</update>
+	
+	<!-- 특정매장 점검등록
+	점검항목 
+	<select id="inspectQAclmn" parameterType="qa" resultType="qa">
+		SELECT q.qanum, qaitem, results, comments
+		FROM QA q, QACHECKLIST qcl
+		WHERE q.qanum=qcl.QANUM
+		AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR}
+		AND trunc(inspectdte,'month') =trunc(sysdate, 'month')
+		ORDER BY qanum
+	</select>
+	체크하면 y로 변경 
+	<update id="updateQAresultsY" parameterType="qa">
+		UPDATE QA q SET results = 'Y'
+		WHERE q.qanum IN (
+		  SELECT qanum
+		  FROM QACHECKLIST qcl
+		  WHERE q.qanum=qcl.QANUM
+		  AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR}
+		  AND trunc(inspectdte,'month') =trunc(sysdate, 'month')
+		  AND qanum in
+		  <foreach collection="ylist" separator=","  item="qanum" open="(" close=")">
+     		 #{qaNum, jdbcType=VARCHAR}
+   		  </foreach>
+		)
+	</update>
+	comments변경
+	<update id="updateQAcomnt"  parameterType="qa">
+		UPDATE QA q SET comments = #{comments, jdbcType=VARCHAR}
+		WHERE q.qanum IN (
+		  SELECT qanum
+		  FROM QACHECKLIST qcl, qa q
+		  WHERE q.qanum=qcl.QANUM
+		  AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR}
+		  AND trunc(inspectdte,'month') = trunc(sysdate, 'month')
+		  AND qanum =#{qaNum, jdbcType=VARCHAR}
+		)
+	</update>
+	
+	등록일
+	<update id="updateQAregdte" parameterType="qa">
+		UPDATE QA q SET regdte = trunc(sysdate)
+		WHERE q.qanum IN (
+		  SELECT q.qanum
+		  FROM QACHECKLIST qcl, qa q
+		  WHERE q.qanum=qcl.QANUM
+		  AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR, index=1}
+		  AND trunc(inspectdte,'month') = trunc(sysdate, 'month')
+		)
+		AND FRREGINUM=#{frRegiNum, jdbcType=VARCHAR, index=1}
+		AND trunc(inspectdte,'month') = trunc(sysdate, 'month')
+	</update>
+	-->
+	
+	
+	
+	<!-- 매장오픈점검 -->
+	<!-- 본사:전매장오픈시간조회 -->
+	<select id="storeOpenList" parameterType="store" resultType="store">
+		SELECT frreginum, frname, SUBSTR(fropertime,1, 5) fropertime, frtel, frrepname, ename
+		FROM store s, emp e
+		WHERE s.empnum=e.EMPNUM
+		AND frreginum!='9999999999'
+		AND frpass IS NOT NULL
+		<if test="frName!=null and !frName.equals('')">
+		AND frName LIKE '%'||#{frName}||'%'
+		</if>
+		<if test="frRepName!=null and !frRepName.equals('')">
+		AND frRepName LIKE '%'||#{frRepName}||'%'
+		</if>
+		<if test="ename!=null and !ename.equals('')">
+		AND ename LIKE '%'||#{ename}||'%'
+		</if>
+		ORDER BY frname
+	</select>
+	
+	
+	<resultMap type="openTimeCalender" id="calMap">
+		<result column="frRegiNum" property="writer"/>
+		<result column="startworkt" property="start"/>
+		<result column="lastworkt" property="end"/>
+	</resultMap>
+	<!-- 본사:매장오픈상세조회-기본정보 -->
+	<select id="storeDetailOpenTime" resultMap="calMap" parameterType="string" >
+		SELECT frRegiNum, frname, fropertime, frrepname, ename, SUBSTR(fropertime,1, 5) opentime, frClosedDte
+		FROM store s, emp e
+		WHERE s.empnum=e.EMPNUM
+		AND frRegiNum=#{writer, jdbcType=VARCHAR}
+	</select>
+	<!-- 본사:매장오픈상세조회-캘린더JSON -->
+	<select id="openTimeDetailCalendar" resultMap="calMap" parameterType="string">
+		SELECT to_char(onTime, 'YYYY/MM/DD') wday, MIN(onTime) startworkt,  MAX(offTime) lastworkt
+		FROM EMPCHECKIN 
+		WHERE frRegiNum=#{writer, jdbcType=VARCHAR}
+		GROUP BY to_char(onTime, 'YYYY/MM/DD')
+	</select>
+
+
+</mapper>
