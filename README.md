@@ -1,6 +1,5 @@
 # FERP : ERP For Franchase
 
-[Notion에서 전체 보기](https://cerulean-plastic-e02.notion.site/FERP-ERP-For-Franchase-9653790bad9d4cf5bc9cff2f7c90de5d)
 
 ## 📢진행개요
 
